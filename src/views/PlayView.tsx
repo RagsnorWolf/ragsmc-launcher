@@ -47,7 +47,7 @@ export default function PlayView(props: PlayViewProps) {
         <img
           src="/mc-title.png"
           alt="Minecraft"
-          className="h-28 drop-shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+          className="h-44 drop-shadow-[0_0_50px_rgba(255,255,255,0.25)]"
         />
       </div>
       <div className="relative z-10 w-full h-full flex flex-col">
