@@ -1,0 +1,17 @@
+{
+  "name": "ragsmc-installer",
+  "version": "1.0.0",
+  "description": "Professional installer for RagsMC Launcher",
+  "main": "src/main.js",
+  "author": "RagsMC",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --config electron-builder.json",
+    "pack": "electron-builder --dir --config electron-builder.json"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+src-tauri/build-log.txt
+installer/node_modules/
+installer/dist-installer/
+installer/package-lock.json
+*.msi
+*.log
+.DS_Store
+Thumbs.db
+cp.txt
+launch-mc.bat
+test-launch.bat
+test-launch.ps1
+test-launch2.ps1

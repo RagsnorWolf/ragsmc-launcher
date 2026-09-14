@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RagsMC Launcher - Instalador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="installer">
+    <!-- Titlebar -->
+    <div class="titlebar">
+      <div class="titlebar-title">
+        <svg class="titlebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+        RagsMC Launcher Installer
+      </div>
+      <div class="titlebar-buttons">
+        <button class="tb-btn tb-min" id="btn-minimize">─</button>
+        <button class="tb-btn tb-close" id="btn-close">✕</button>
+      </div>
+    </div>
+
+    <div class="installer-body">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <rect width="48" height="48" rx="10" fill="#16a34a" fill-opacity="0.15"/>
+              <path d="M14 34V18l10-6 10 6v16l-10 6-10-6z" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <path d="M14 18l10 6 10-6" stroke="#22c55e" stroke-width="2"/>
+              <path d="M24 24v16" stroke="#22c55e" stroke-width="2"/>
+            </svg>
+          </div>
+          <span class="logo-text">RagsMC</span>
+        </div>
+        <nav class="sidebar-steps" id="sidebar-steps">
+          <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <span>Bienvenida</span>
+          </div>
+          <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <span>Opciones</span>
+          </div>
+          <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <span>Licencia</span>
+          </div>
+          <div class="step" data-step="4">
+            <div class="step-number">4</div>
+            <span>Instalacion</span>
+          </div>
+          <div class="step" data-step="5">
+            <div class="step-number">5</div>
+            <span>Finalizar</span>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <span class="version-text">v1.0.0</span>
+        </div>
+      </aside>
+
+      <!-- Main content area -->
+      <main class="content">
+        <!-- STEP 1: Welcome -->
+        <section class="page active" id="page-1">
+          <div class="page-header">
+            <h1>Bienvenido al instalador</h1>
+            <p class="subtitle">Este asistente te guiara para instalar, reparar o desinstalar RagsMC Launcher.</p>
+          </div>
+
+          <div class="action-cards">
+            <div class="action-card selected" data-action="install" id="card-install">
+              <div class="card-icon install-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </div>
+              <h3>Instalar</h3>
+              <p>Instala o actualiza RagsMC Launcher en tu sistema.</p>
+            </div>
+            <div class="action-card" data-action="repair" id="card-repair">
+              <div class="card-icon repair-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                </svg>
+              </div>
+              <h3>Reparar</h3>
+              <p>Repara y re-registra los componentes de la instalacion.</p>
+            </div>
+            <div class="action-card" data-action="uninstall" id="card-uninstall">
+              <div class="card-icon uninstall-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+              </div>
+              <h3>Desinstalar</h3>
+              <p>Elimina RagsMC Launcher y todos sus archivos del sistema.</p>
+            </div>
+          </div>
+
+          <div class="existing-install" id="existing-install-banner" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Se detecto una instalacion existente en: <strong id="existing-path"></strong></span>
+          </div>
+
+          <div class="page-footer">
+            <div class="lang-selector">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+              </svg>
+              es Espanol
+            </div>
+            <button class="btn btn-primary" id="btn-next" onclick="nextStep()">
+              Siguiente
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- STEP 2: Install Options -->
+        <section class="page" id="page-2">
+          <div class="page-header">
+            <h1>Opciones de instalacion</h1>
+            <p class="subtitle">Elige donde instalar RagsMC Launcher.</p>
+          </div>
+
+          <div class="install-options">
+            <label class="install-option" id="opt-all">
+              <input type="radio" name="install-type" value="all" />
+              <div class="option-content">
+                <div class="option-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/>
+                    <circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 010 7.75"/>
+                  </svg>
+                </div>
+                <div class="option-text">
+                  <h4>Para todos los usuarios</h4>
+                  <p class="option-path" id="path-all">C:\Program Files\RagsMC Launcher</p>
+                  <span class="option-badge admin-badge">Requiere administrador</span>
+                </div>
+              </div>
+            </label>
+
+            <label class="install-option selected" id="opt-user">
+              <input type="radio" name="install-type" value="user" checked />
+              <div class="option-content">
+                <div class="option-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4-4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="option-text">
+                  <h4>Solo para mi</h4>
+                  <p class="option-path" id="path-user">C:\Users\Administrator\AppData\Local\Programs\RagsMC Launcher</p>
+                  <span class="option-badge user-badge">Recomendado</span>
+                </div>
+              </div>
+            </label>
+
+            <label class="install-option" id="opt-custom">
+              <input type="radio" name="install-type" value="custom" />
+              <div class="option-content">
+                <div class="option-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                  </svg>
+                </div>
+                <div class="option-text">
+                  <h4>Ruta personalizada</h4>
+                  <div class="custom-path-row" id="custom-path-row">
+                    <input type="text" id="custom-path-input" placeholder="Selecciona una carpeta..." class="custom-path-input" />
+                    <button class="btn btn-secondary btn-browse" onclick="browseFolder()">Buscar</button>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div class="shortcut-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-desktop" checked />
+              <span class="checkmark"></span>
+              Crear acceso directo en el escritorio
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-startmenu" checked />
+              <span class="checkmark"></span>
+              Crear acceso directo en el Menu de Inicio
+            </label>
+          </div>
+
+          <div class="page-footer">
+            <div class="footer-left">
+              <button class="btn btn-secondary" onclick="prevStep()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Atras
+              </button>
+            </div>
+            <button class="btn btn-primary" onclick="nextStep()">
+              Siguiente
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- STEP 3: License -->
+        <section class="page" id="page-3">
+          <div class="page-header">
+            <h1>Acuerdo de licencia</h1>
+            <p class="subtitle">Lee los terminos antes de continuar.</p>
+          </div>
+
+          <div class="license-box" id="license-box">
+            <h4>TERMINOS DE LICENCIA DE USUARIO FINAL - RagsMC Launcher</h4>
+            <p>IMPORTANTE: Lee este Acuerdo de Licencia de Usuario Final ("Acuerdo") cuidadosamente antes de usar RagsMC Launcher ("Software").</p>
+
+            <h4>1. OTORGAMIENTO DE LICENCIA</h4>
+            <p>Se te otorga una licencia limitada, no exclusiva, no transferible y revocable para usar el Software exclusivamente para uso personal no comercial, sujeto a los terminos de este Acuerdo.</p>
+
+            <h4>2. DESCRIPCION DEL SOFTWARE</h4>
+            <p>RagsMC Launcher es un launcher de codigo abierto para Minecraft Java Edition que permite gestionar instalaciones, mods, shaders y resource packs. El Software no esta afiliado, patrocinado ni aprobado por Mojang Studios o Microsoft Corporation.</p>
+
+            <h4>3. RESTRICCIONES</h4>
+            <p>No puedes: (a) modificar, traducir, descompilar o hacer ingenieria inversa del Software; (b) eliminar cualquier notificacion de propiedad del Software; (c) alquilar, arrendar o prestar el Software; (d) usar el Software para fines ilegales o no autorizados.</p>
+
+            <h4>4. PROPIEDAD INTELECTUAL</h4>
+            <p>El Software y todos los derechos de propiedad intelectual asociados permanecen exclusivamente como propiedad de los desarrolladores de RagsMC. Este Acuerdo no te otorga ningun derecho sobre marcas registradas, logos o nombres comerciales del Software.</p>
+
+            <h4>5. LIMITACION DE RESPONSABILIDAD</h4>
+            <p>EL SOFTWARE SE PROPORCIONA "TAL CUAL" SIN GARANTIA DE NINGUN TIPO, EXPRESA O IMPLICADA, INCLUYENDO, ENTRE OTRAS, LAS GARANTIAS DE COMERCIALIZACION, IDONEIDAD PARA UN FIN PARTICULAR Y NO INFRACCION.</p>
+
+            <h4>6. DATOS Y PRIVACIDAD</h4>
+            <p>El Software puede recopilar datos de uso anonimos para mejorar la experiencia del usuario. No se recopilan datos personales identificables. Puedes desactivar la recopilacion de datos en los ajustes del Software.</p>
+
+            <h4>7. ACTUALIZACIONES</h4>
+            <p>El Software puede incluir un mecanismo de actualizacion automatica. Al usar el Software, aceptas que este pueda descargar e instalar actualizaciones automaticamente.</p>
+
+            <h4>8. TERMINACION</h4>
+            <p>Este Acuerdo es efectivo hasta que se termine. Puedes terminar este Acuerdo en cualquier momento eliminando el Software y todas sus copias.</p>
+
+            <h4>9. LEY APLICABLE</h4>
+            <p>Este Acuerdo se regira e interpretara de conformidad con las leyes de la jurisdiccion correspondiente, sin consideracion a sus principios de conflicto de leyes.</p>
+
+            <p class="license-accept">Al hacer clic en "Acepto", confirmas que has leido, comprendido y aceptado los terminos de este Acuerdo de Licencia.</p>
+          </div>
+
+          <label class="checkbox-label accept-check">
+            <input type="checkbox" id="chk-accept" />
+            <span class="checkmark"></span>
+            Acepto los terminos del acuerdo de licencia
+          </label>
+
+          <div class="page-footer">
+            <div class="footer-left">
+              <button class="btn btn-secondary" onclick="prevStep()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Atras
+              </button>
+            </div>
+            <button class="btn btn-primary" id="btn-accept-install" onclick="nextStep()" disabled>
+              Instalar
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- STEP 4: Installing -->
+        <section class="page" id="page-4">
+          <div class="page-header centered">
+            <div class="installing-logo">
+              <svg viewBox="0 0 80 80" fill="none">
+                <rect width="80" height="80" rx="16" fill="#16a34a" fill-opacity="0.1"/>
+                <path d="M22 56V32l18-10 18 10v24l-18 10-18-10z" stroke="#22c55e" stroke-width="2.5" fill="none"/>
+                <path d="M22 32l18 10 18-10" stroke="#22c55e" stroke-width="2.5"/>
+                <path d="M40 42v24" stroke="#22c55e" stroke-width="2.5"/>
+              </svg>
+            </div>
+            <h1 id="install-title">Instalando RagsMC Launcher</h1>
+            <p class="subtitle" id="install-subtitle">Preparando archivos...</p>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="progress-info">
+              <span id="progress-text">0%</span>
+              <span id="progress-detail">Esperando...</span>
+            </div>
+          </div>
+
+          <button class="btn btn-link" id="btn-toggle-log" onclick="toggleLog()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            Mostrar detalles
+          </button>
+
+          <div class="install-log" id="install-log" style="display:none;">
+            <div id="log-content"></div>
+          </div>
+        </section>
+
+        <!-- STEP 5: Done -->
+        <section class="page" id="page-5">
+          <div class="page-header centered">
+            <div class="done-icon">
+              <svg viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" fill="#16a34a" fill-opacity="0.1" stroke="#22c55e" stroke-width="2"/>
+                <polyline points="24 42 34 52 56 28" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h1 id="done-title">RagsMC Launcher instalado correctamente!</h1>
+            <p class="subtitle" id="done-subtitle">Ya puedes abrir la aplicacion desde el escritorio o el Menu de Inicio.</p>
+          </div>
+
+          <div class="done-actions">
+            <button class="btn btn-primary btn-large" id="btn-open-now" onclick="openApp()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Abrir RagsMC ahora
+            </button>
+            <button class="btn btn-secondary" id="btn-open-folder" onclick="openFolder()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+              Abrir carpeta
+            </button>
+          </div>
+
+          <div class="page-footer">
+            <button class="btn btn-primary btn-large btn-finish" onclick="closeInstaller()">
+              Finalizar
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
