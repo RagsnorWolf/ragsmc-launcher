@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Cpu, Disc, Globe, Monitor, Coffee, RefreshCw, FolderOpen, CheckCircle2, AlertTriangle, Search } from "lucide-react";
+import { Cpu, Disc, Globe, Monitor, Coffee, RefreshCw, FolderOpen, CheckCircle2, AlertTriangle, Search, Download, ArrowDownToLine } from "lucide-react";
+import type { UpdateInfo } from "../types";
 
 export interface LauncherSettings {
   javaPath: string;
@@ -21,7 +22,7 @@ interface JavaInfo {
   recommendedFor: string[];
 }
 
-type SettingsTab = "java" | "memory" | "display" | "advanced";
+type SettingsTab = "java" | "memory" | "display" | "advanced" | "updates";
 
 interface SettingsViewProps {
   settings: LauncherSettings;
@@ -33,6 +34,9 @@ export default function SettingsView({ settings, onChange }: SettingsViewProps) 
   const [javaList, setJavaList] = useState<JavaInfo[]>([]);
   const [javaLoading, setJavaLoading] = useState(true);
   const [javaDetecting, setJavaDetecting] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const detectJava = () => {
     setJavaDetecting(true);
@@ -44,11 +48,21 @@ export default function SettingsView({ settings, onChange }: SettingsViewProps) 
 
   useEffect(() => { detectJava(); }, []);
 
+  const checkForUpdates = () => {
+    setCheckingUpdate(true);
+    setUpdateError(null);
+    invoke<UpdateInfo>("check_for_updates")
+      .then((info) => setUpdateInfo(info))
+      .catch((e) => setUpdateError(String(e)))
+      .finally(() => setCheckingUpdate(false));
+  };
+
   const tabs: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { key: "java", label: "Java", icon: <Coffee className="w-4 h-4" /> },
     { key: "memory", label: "Memoria", icon: <Cpu className="w-4 h-4" /> },
     { key: "display", label: "Pantalla", icon: <Monitor className="w-4 h-4" /> },
     { key: "advanced", label: "Avanzado", icon: <Globe className="w-4 h-4" /> },
+    { key: "updates", label: "Actualizaciones", icon: <Download className="w-4 h-4" /> },
   ];
 
   return (
@@ -314,6 +328,83 @@ export default function SettingsView({ settings, onChange }: SettingsViewProps) 
                 />
                 <p className="text-[10px] text-zinc-600 mt-1">Override de DNS para resolver problemas de conexion.</p>
               </div>
+            </div>
+          </section>
+        )}
+
+        {tab === "updates" && (
+          <section className="rounded-xl border border-white/10 bg-[#141414] p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Download className="w-4 h-4 text-green-400" />
+              <h2 className="text-sm font-semibold text-zinc-200">Actualizaciones</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-zinc-300">Version actual: <span className="text-green-400 font-mono">v{updateInfo?.current_version ?? "?"}</span></p>
+                  {updateInfo && (
+                    <p className="text-sm text-zinc-400 mt-0.5">
+                      Ultima version: <span className="font-mono">{updateInfo.update_available ? updateInfo.latest_version : updateInfo.current_version}</span>
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={checkForUpdates}
+                  disabled={checkingUpdate}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${checkingUpdate ? "animate-spin" : ""}`} />
+                  {checkingUpdate ? "Verificando..." : "Verificar actualizaciones"}
+                </button>
+              </div>
+
+              {updateError && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <p className="text-sm text-red-400">{updateError}</p>
+                </div>
+              )}
+
+              {updateInfo?.update_available && (
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    <p className="text-sm font-semibold text-green-400">
+                      Nueva version disponible: v{updateInfo.latest_version}
+                    </p>
+                  </div>
+                  {updateInfo.release_date && (
+                    <p className="text-xs text-zinc-500">
+                      Publicada: {new Date(updateInfo.release_date).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}
+                    </p>
+                  )}
+                  {updateInfo.release_notes && (
+                    <div className="p-3 bg-[#0a0e0d] rounded-lg border border-white/5">
+                      <p className="text-xs font-semibold text-zinc-400 mb-1">Notas de la version:</p>
+                      <p className="text-sm text-zinc-300 whitespace-pre-wrap">{updateInfo.release_notes}</p>
+                    </div>
+                  )}
+                  {updateInfo.download_url && (
+                    <a
+                      href={updateInfo.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <ArrowDownToLine className="w-4 h-4" />
+                      Descargar v{updateInfo.latest_version}
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {updateInfo && !updateInfo.update_available && !updateError && (
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  <p className="text-sm text-green-400">Tienes la ultima version.</p>
+                </div>
+              )}
             </div>
           </section>
         )}

@@ -3568,6 +3568,95 @@ pub fn get_launch_log(installation_id: String) -> Result<String, String> {
 // Tests (verificación autónoma sin GUI)
 // ---------------------------------------------------------------------------
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub current_version: String,
+    pub latest_version: String,
+    pub update_available: bool,
+    pub download_url: Option<String>,
+    pub release_notes: Option<String>,
+    pub release_date: Option<String>,
+}
+
+#[tauri::command]
+pub fn check_for_updates() -> Result<UpdateInfo, String> {
+    let current = LAUNCHER_VERSION.to_string();
+
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("Error creando cliente HTTP: {}", e))?;
+
+    let resp = client
+        .get("https://api.github.com/repos/RagsnorWolf/ragsmc-launcher/releases/latest")
+        .header("User-Agent", "RagsMC-Launcher")
+        .send()
+        .map_err(|e| format!("Error consultando actualizaciones: {}", e))?;
+
+    if !resp.status().is_success() {
+        return Ok(UpdateInfo {
+            current_version: current.clone(),
+            latest_version: current.clone(),
+            update_available: false,
+            download_url: None,
+            release_notes: None,
+            release_date: None,
+        });
+    }
+
+    let json: serde_json::Value = resp
+        .json()
+        .map_err(|e| format!("Error parseando respuesta: {}", e))?;
+
+    let tag = json["tag_name"].as_str().unwrap_or("0.0.0").trim_start_matches('v').to_string();
+    let body = json["body"].as_str().map(|s| s.to_string());
+    let date = json["published_at"].as_str().map(|s| s.to_string());
+
+    let mut download_url = None;
+    if let Some(assets) = json["assets"].as_array() {
+        for asset in assets {
+            let name = asset["name"].as_str().unwrap_or("");
+            if name.ends_with(".exe") && name.to_lowercase().contains("setup") {
+                download_url = asset["browser_download_url"].as_str().map(|s| s.to_string());
+                break;
+            }
+        }
+        if download_url.is_none() {
+            for asset in assets {
+                let name = asset["name"].as_str().unwrap_or("");
+                if name.ends_with(".exe") && !name.contains("blockmap") {
+                    download_url = asset["browser_download_url"].as_str().map(|s| s.to_string());
+                    break;
+                }
+            }
+        }
+    }
+
+    let update_available = compare_versions(&tag, &current) > 0;
+
+    Ok(UpdateInfo {
+        current_version: current,
+        latest_version: tag,
+        update_available,
+        download_url,
+        release_notes: body,
+        release_date: date,
+    })
+}
+
+fn compare_versions(a: &str, b: &str) -> i32 {
+    let pa: Vec<u32> = a.split('.').filter_map(|s| s.parse().ok()).collect();
+    let pb: Vec<u32> = b.split('.').filter_map(|s| s.parse().ok()).collect();
+    let len = pa.len().max(pb.len());
+    for i in 0..len {
+        let va = pa.get(i).unwrap_or(&0);
+        let vb = pb.get(i).unwrap_or(&0);
+        if va > vb { return 1; }
+        if va < vb { return -1; }
+    }
+    0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

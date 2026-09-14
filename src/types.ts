@@ -485,3 +485,12 @@ export interface AccountEntry {
   skinUrl?: string;
   selected: boolean;
 }
+
+export interface UpdateInfo {
+  current_version: string;
+  latest_version: string;
+  update_available: boolean;
+  download_url: string | null;
+  release_notes: string | null;
+  release_date: string | null;
+}

@@ -3,8 +3,8 @@ mod minecraft;
 
 use tauri::Manager;
 use minecraft::{
-    add_account, backup_instance, cancel_install, delete_account, delete_content,
-    delete_installation, detect_java_versions, get_accounts, get_installations,
+    add_account, backup_instance, cancel_install, check_for_updates, delete_account,
+    delete_content, delete_installation, detect_java_versions, get_accounts, get_installations,
     get_installation_summary, get_launch_log, get_minecraft_versions, get_recommended_java,
     get_service_status, get_total_memory_gb,
     install_mod, launch_minecraft, list_backups, list_mods, list_resource_packs, list_shaders,
@@ -57,6 +57,7 @@ pub fn run() {
             get_launch_log,
             detect_java_versions,
             get_recommended_java,
+            check_for_updates,
             show_main_window
         ])
         .run(tauri::generate_context!())
