@@ -4,6 +4,7 @@ Name "RagsMC Launcher"
 OutFile "RagsMC-Installer.exe"
 InstallDir "$APPDATA\.minecraft"
 RequestExecutionLevel user
+Icon "src-tauri\icons\icon.ico"
 
 !define MUI_ICON "src-tauri\icons\icon.ico"
 !define MUI_ABORTWARNING
