@@ -43,6 +43,13 @@ export default function PlayView(props: PlayViewProps) {
         alt=""
         className="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
       />
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <img
+          src="/mc-title.png"
+          alt="Minecraft"
+          className="h-16 drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+        />
+      </div>
       <div className="relative z-10 w-full h-full flex flex-col">
         <div className="flex-1 flex items-end justify-end p-6">
           <PlayCard
