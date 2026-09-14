@@ -38,7 +38,12 @@ export default function PlayView(props: PlayViewProps) {
 
   return (
     <div className="relative flex-1 mc-bg overflow-hidden flex flex-col">
-      <div className="flex-1 flex items-end justify-end p-6">
+      <img
+        src="/bg-distant-horizons.png"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+      />
+      <div className="flex-1 flex items-end justify-end p-6 relative z-10">
         <PlayCard
           installations={props.installations}
           selectedId={props.selectedId}
@@ -50,7 +55,7 @@ export default function PlayView(props: PlayViewProps) {
       </div>
 
       {summary && (
-        <div className="absolute top-6 right-6 w-64 rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl p-4 shadow-2xl animate-fade-up">
+        <div className="absolute top-6 right-6 w-64 rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl p-4 shadow-2xl animate-fade-up relative z-10">
           <p className="text-[10px] tracking-[0.15em] text-zinc-500 font-semibold mb-2 uppercase">Instalacion</p>
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-xs">
@@ -89,7 +94,7 @@ export default function PlayView(props: PlayViewProps) {
       )}
 
       {showNews && newsData.length > 0 && (
-        <div className="absolute bottom-6 left-6 w-80 max-h-[60vh] overflow-y-auto rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl animate-fade-up">
+        <div className="absolute bottom-6 left-6 w-80 max-h-[60vh] overflow-y-auto rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl animate-fade-up relative z-10">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
             <div className="flex items-center gap-2">
               <Newspaper className="w-4 h-4 text-green-400" />
