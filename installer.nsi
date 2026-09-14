@@ -29,25 +29,11 @@ Section "Instalacion"
 
   CreateDirectory "$SMPROGRAMS\RagsMC Launcher"
 
-  ; Create shortcuts using VBScript for proper WorkingDirectory
-  nsExec::ExecToStack 'cmd /c echo Set oWS = WScript.CreateObject("WScript.Shell") > "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c echo Set oLink = oWS.CreateShortcut("$DESKTOP\RagsMC Launcher.lnk") >> "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.TargetPath = "$APPDATA\.minecraft\RagsMC-Launcher.exe" >> "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.WorkingDirectory = "$APPDATA\.minecraft" >> "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.Description = "RagsMC Launcher" >> "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.Save >> "%TEMP%\ragsmc_shortcut.vbs"'
-
-  nsExec::ExecToStack 'cmd /c echo Set oWS = WScript.CreateObject("WScript.Shell") > "%TEMP%\ragsmc_shortcut2.vbs"'
-  nsExec::ExecToStack 'cmd /c echo Set oLink = oWS.CreateShortcut("$SMPROGRAMS\RagsMC Launcher\RagsMC Launcher.lnk") >> "%TEMP%\ragsmc_shortcut2.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.TargetPath = "$APPDATA\.minecraft\RagsMC-Launcher.exe" >> "%TEMP%\ragsmc_shortcut2.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.WorkingDirectory = "$APPDATA\.minecraft" >> "%TEMP%\ragsmc_shortcut2.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.Description = "RagsMC Launcher" >> "%TEMP%\ragsmc_shortcut2.vbs"'
-  nsExec::ExecToStack 'cmd /c echo oLink.Save >> "%TEMP%\ragsmc_shortcut2.vbs"'
-
-  nsExec::ExecToStack 'cmd /c cscript //nologo "%TEMP%\ragsmc_shortcut.vbs"'
-  nsExec::ExecToStack 'cmd /c cscript //nologo "%TEMP%\ragsmc_shortcut2.vbs"'
-  Delete "%TEMP%\ragsmc_shortcut.vbs"
-  Delete "%TEMP%\ragsmc_shortcut2.vbs"
+  ; Copy PowerShell script to temp and execute
+  SetOutPath "$TEMP"
+  File "create-shortcuts.ps1"
+  nsExec::ExecToStack 'powershell -NoProfile -ExecutionPolicy Bypass -File "$TEMP\create-shortcuts.ps1"'
+  Delete "$TEMP\create-shortcuts.ps1"
 
   ; Store uninstall info
   WriteRegStr HKCU "Software\RagsMC Launcher" "InstallDir" "$APPDATA\.minecraft"
