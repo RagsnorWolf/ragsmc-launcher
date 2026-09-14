@@ -1,0 +1,76 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build Tauri app
+        run: pnpm tauri build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
+      - name: Get version from tauri.conf.json
+        id: version
+        shell: pwsh
+        run: |
+          $conf = Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json
+          echo "VERSION=$($conf.version)" >> $env:GITHUB_OUTPUT
+
+      - name: Build NSIS Installer
+        shell: pwsh
+        run: |
+          $nsisPath = "C:\Users\runneradmin\AppData\Local\tauri\NSIS\makensis.exe"
+          if (Test-Path $nsisPath) {
+            & $nsisPath installer.nsi
+          } else {
+            Write-Host "NSIS not found at $nsisPath, trying alternative..."
+            $nsisPath = "$env:LOCALAPPDATA\tauri\NSIS\makensis.exe"
+            & $nsisPath installer.nsi
+          }
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: RagsMC Launcher v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## RagsMC Launcher v${{ steps.version.outputs.VERSION }}
+            
+            ### Descargas
+            - **Instalador NSIS**: `RagsMC-Installer.exe` - Instala en %APPDATA%\.minecraft
+            - **Launcher portable**: `RagsMC-Launcher.exe` - Ejecutable directo
+          files: |
+            src-tauri/target/release/ragsmc-launcher.exe
+            RagsMC-Installer.exe
+            src-tauri/target/release/bundle/nsis/RagsMC-Launcher_${{ steps.version.outputs.VERSION }}_x64-setup.exe
+          draft: false
+          prerelease: false
