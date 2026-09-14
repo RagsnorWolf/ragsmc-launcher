@@ -27,7 +27,7 @@ const FABRIC_META_BASE: &str = "https://meta.fabricmc.net/v2";
 const ADOPTIUM_API: &str = "https://api.adoptium.net/v3/binary/latest";
 const USER_AGENT: &str = "RagsMC-Launcher/0.1.0";
 const LAUNCHER_NAME: &str = "RagsMC-Launcher";
-const LAUNCHER_VERSION: &str = "1.0.1";
+const LAUNCHER_VERSION: &str = "1.0.2";
 
 // ---------------------------------------------------------------------------
 // Tipos que viajan al frontend (deben coincidir con src/types.ts, camelCase)

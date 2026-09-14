@@ -1,6 +1,14 @@
 [
   {
     "id": "1",
+    "title": "RagsMC Launcher v1.0.2",
+    "summary": "Logo personalizado en launcher, instalador y accesos directos. Titulo de Minecraft mas grande en pantalla principal. Instalador NSIS instala en .minecraft como TLauncher.",
+    "date": "2026-09-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "2",
     "title": "RagsMC Launcher v1.0.1",
     "summary": "Correccion critica: Minecraft ahora inicia correctamente con Fabric. Se corrigio el error de ASM duplicado, la extraccion de natives LWJGL, y el mainClass de Fabric.",
     "date": "2026-09-13",
@@ -8,7 +16,7 @@
     "icon": "update"
   },
   {
-    "id": "2",
+    "id": "3",
     "title": "RagsMC Launcher v1.0.0",
     "summary": "Primera version estable del launcher. Soporte para Fabric, Forge, NeoForge y Quilt.",
     "date": "2026-09-12",
@@ -16,7 +24,7 @@
     "icon": "update"
   },
   {
-    "id": "3",
+    "id": "4",
     "title": "Gestor de Mods integrado",
     "summary": "Ahora puedes gestionar tus mods directamente desde el launcher. Activa, desactiva o elimina mods con un clic.",
     "date": "2026-09-12",
@@ -24,7 +32,7 @@
     "icon": "feature"
   },
   {
-    "id": "4",
+    "id": "5",
     "title": "Consola de Logs en tiempo real",
     "summary": "Monitorea los logs de Minecraft en tiempo real. Ideal para diagnosticar problemas con mods.",
     "date": "2026-09-12",
@@ -32,7 +40,7 @@
     "icon": "feature"
   },
   {
-    "id": "5",
+    "id": "6",
     "title": "Busqueda de Mods en Modrinth",
     "summary": "Explora e instala miles de mods desde Modrinth directamente desde el launcher.",
     "date": "2026-09-12",
