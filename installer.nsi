@@ -32,20 +32,17 @@ Section "Instalacion"
 
   CreateDirectory "$SMPROGRAMS\RagsMC Launcher"
 
-  ; Copy PowerShell script to temp and execute
-  SetOutPath "$TEMP"
-  File "create-shortcuts.ps1"
-  nsExec::ExecToStack 'powershell -NoProfile -ExecutionPolicy Bypass -File "$TEMP\create-shortcuts.ps1"'
-  Delete "$TEMP\create-shortcuts.ps1"
+  ; Desktop shortcut - NSIS native with icon
+  CreateShortCut "$DESKTOP\RagsMC Launcher.lnk" "$APPDATA\.minecraft\RagsMC-Launcher.exe" "" "$APPDATA\.minecraft\RagsMC-Icon.ico" 0
 
-  ; Store uninstall info
+  ; Start Menu shortcut
+  CreateShortCut "$SMPROGRAMS\RagsMC Launcher\RagsMC Launcher.lnk" "$APPDATA\.minecraft\RagsMC-Launcher.exe" "" "$APPDATA\.minecraft\RagsMC-Icon.ico" 0
+
   WriteRegStr HKCU "Software\RagsMC Launcher" "InstallDir" "$APPDATA\.minecraft"
   WriteRegStr HKCU "Software\RagsMC Launcher" "UninstallString" '"$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"'
   
-  ; Create uninstaller
   WriteUninstaller "$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"
 
-  ; Add to Add/Remove Programs
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayName" "RagsMC Launcher"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "UninstallString" '"$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "InstallLocation" "$APPDATA\.minecraft"
