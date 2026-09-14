@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import Titlebar from "./components/Titlebar";
 import Sidebar from "./components/Sidebar";
 import ProgressModal, { type LaunchStatus } from "./components/ProgressModal";
@@ -198,6 +199,9 @@ export default function App({ onReady }: AppProps) {
         const p = event.payload;
         if (p.stage === "done") {
           setLaunch({ open: true, phase: "done", message: p.message, current: 1, total: 1, stage: p.stage });
+          setTimeout(() => {
+            getCurrentWindow().close();
+          }, 1500);
         } else if (p.stage === "error") {
           setLaunch({ open: true, phase: "error", message: p.message, stage: p.stage });
         } else {
