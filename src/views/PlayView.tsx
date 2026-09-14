@@ -41,7 +41,7 @@ export default function PlayView(props: PlayViewProps) {
       <img
         src="/bg-distant-horizons.png"
         alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
+        className="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
       />
       <div className="relative z-10 w-full h-full flex flex-col">
         <div className="flex-1 flex items-end justify-end p-6">
