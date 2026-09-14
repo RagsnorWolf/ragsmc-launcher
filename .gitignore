@@ -2,6 +2,21 @@ node_modules/
 dist/
 src-tauri/target/
 installer/dist-installer/
-*.log
+
+# Build artifacts
 *.exe
+*.msi
+
+# Test/debug files
+*.log
+*.bat
+*.ps1
+cp.txt
+launch-mc.bat
 installer-hooks.nsh
+
+# Installer package lock
+installer/package-lock.json
+
+# Build logs
+src-tauri/build-log.txt
