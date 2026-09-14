@@ -26,7 +26,9 @@ Icon "src-tauri\icons\icon.ico"
 Section "Instalacion"
   SetOutPath "$APPDATA\.minecraft"
   File "src-tauri\target\release\ragsmc-launcher.exe"
+  File "src-tauri\icons\icon.ico"
   Rename "$APPDATA\.minecraft\ragsmc-launcher.exe" "$APPDATA\.minecraft\RagsMC-Launcher.exe"
+  Rename "$APPDATA\.minecraft\icon.ico" "$APPDATA\.minecraft\RagsMC-Icon.ico"
 
   CreateDirectory "$SMPROGRAMS\RagsMC Launcher"
 
@@ -47,12 +49,13 @@ Section "Instalacion"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayName" "RagsMC Launcher"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "UninstallString" '"$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "InstallLocation" "$APPDATA\.minecraft"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayIcon" "$APPDATA\.minecraft\RagsMC-Launcher.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayIcon" "$APPDATA\.minecraft\RagsMC-Icon.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "Publisher" "RagsNorWolf"
 SectionEnd
 
 Section "Uninstall"
   Delete "$APPDATA\.minecraft\RagsMC-Launcher.exe"
+  Delete "$APPDATA\.minecraft\RagsMC-Icon.ico"
   Delete "$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"
   Delete "$DESKTOP\RagsMC Launcher.lnk"
   Delete "$SMPROGRAMS\RagsMC Launcher\RagsMC Launcher.lnk"
