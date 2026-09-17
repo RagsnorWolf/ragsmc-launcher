@@ -1,26 +1,25 @@
 !include "MUI2.nsh"
 
 ; ---------------------------------------------------------------------------
-; Metadatos del producto - CLAVE contra falsos positivos
+; Product metadata
 ; ---------------------------------------------------------------------------
 Name "RagsMC Launcher"
-OutFile "RagsMC-Installer.exe"
+OutFile "RagsMC_Launcher_Setup_v1.0.3.exe"
 InstallDir "$APPDATA\.minecraft"
 RequestExecutionLevel user
 Icon "src-tauri\icons\icon.ico"
 UninstallIcon "src-tauri\icons\icon.ico"
 
-; Información de versión del PE (Windows la lee para mostrar propiedades)
+; PE version info
 VIProductVersion "1.0.3.0"
 VIAddVersionKey "ProductName" "RagsMC Launcher"
-VIAddVersionKey "CompanyName" "RagsNorWolf"
-VIAddVersionKey "FileDescription" "Instalador de RagsMC Launcher"
-VIAddVersionKey "LegalCopyright" "© 2026 RagsNorWolf. Todos los derechos reservados."
+VIAddVersionKey "CompanyName" "RagsMC"
+VIAddVersionKey "FileDescription" "RagsMC Launcher Installer"
+VIAddVersionKey "LegalCopyright" "© 2026 RagsMC"
 VIAddVersionKey "FileVersion" "1.0.3"
 VIAddVersionKey "ProductVersion" "1.0.3"
-VIAddVersionKey "OriginalFilename" "RagsMC-Installer.exe"
+VIAddVersionKey "OriginalFilename" "RagsMC_Launcher_Setup_v1.0.3.exe"
 
-; Compresión LZMA (estándar, no sospechosa)
 SetCompressor /SOLID lzma
 
 ; ---------------------------------------------------------------------------
@@ -30,7 +29,7 @@ SetCompressor /SOLID lzma
 !define MUI_UNICON "src-tauri\icons\icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "RagsMC Launcher v1.0.3"
-!define MUI_WELCOMEPAGE_TEXT "Asistente de instalación de RagsMC Launcher.$\r$\n$\r$\nSe instalará en: $APPDATA\.minecraft$\r$\n$\r$\nPresiona Siguiente para continuar."
+!define MUI_WELCOMEPAGE_TEXT "Asistente de instalacion de RagsMC Launcher.$\r$\n$\r$\nSe instalara en: $APPDATA\.minecraft$\r$\n$\r$\nPresiona Siguiente para continuar."
 !define MUI_FINISHPAGE_RUN "$APPDATA\.minecraft\RagsMC-Launcher.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Ejecutar RagsMC Launcher"
 
@@ -45,43 +44,40 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_LANGUAGE "Spanish"
 
 ; ---------------------------------------------------------------------------
-; Instalación
+; Install
 ; ---------------------------------------------------------------------------
 Section "Instalacion"
   SetOutPath "$APPDATA\.minecraft"
 
-  ; Archivos principales
   File "src-tauri\target\release\ragsmc-launcher.exe"
   File "src-tauri\icons\icon.ico"
 
-  ; Renombrar a nombre amigable
   Rename "$APPDATA\.minecraft\ragsmc-launcher.exe" "$APPDATA\.minecraft\RagsMC-Launcher.exe"
   Rename "$APPDATA\.minecraft\icon.ico" "$APPDATA\.minecraft\RagsMC-Icon.ico"
 
-  ; README legítimo dentro de la instalación
+  ; README
   FileOpen $0 "$APPDATA\.minecraft\README.txt" w
   FileWrite $0 "RagsMC Launcher v1.0.3$\r$\n"
-  FileWrite $0 "© 2026 RagsNorWolf$\r$\n$\r$\n"
+  FileWrite $0 "(c) 2026 RagsMC$\r$\n$\r$\n"
   FileWrite $0 "Launcher de Minecraft independiente.$\r$\n"
   FileWrite $0 "https://ragslaunchermc.dpdns.org/$\r$\n"
   FileWrite $0 "https://github.com/RagsnorWolf/ragsmc-launcher$\r$\n"
   FileClose $0
 
-  ; Accesos directos
+  ; Shortcuts
   CreateDirectory "$SMPROGRAMS\RagsMC Launcher"
   CreateShortCut "$DESKTOP\RagsMC Launcher.lnk" "$APPDATA\.minecraft\RagsMC-Launcher.exe" "" "$APPDATA\.minecraft\RagsMC-Icon.ico" 0
   CreateShortCut "$SMPROGRAMS\RagsMC Launcher\RagsMC Launcher.lnk" "$APPDATA\.minecraft\RagsMC-Launcher.exe" "" "$APPDATA\.minecraft\RagsMC-Icon.ico" 0
 
-  ; Registro de desinstalación (estándar de Windows)
+  ; Registry
   WriteRegStr HKCU "Software\RagsMC Launcher" "InstallDir" "$APPDATA\.minecraft"
   WriteRegStr HKCU "Software\RagsMC Launcher" "UninstallString" '"$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"'
 
   WriteUninstaller "$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"
 
-  ; Agregar a "Programas instalados" de Windows
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayName" "RagsMC Launcher"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "DisplayVersion" "1.0.3"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "Publisher" "RagsNorWolf"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "Publisher" "RagsMC"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "UrlInfoAbout" "https://ragslaunchermc.dpdns.org"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "InstallLocation" "$APPDATA\.minecraft"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\RagsMC Launcher" "UninstallString" '"$APPDATA\.minecraft\Uninstall RagsMC Launcher.exe"'
@@ -91,7 +87,7 @@ Section "Instalacion"
 SectionEnd
 
 ; ---------------------------------------------------------------------------
-; Desinstalación
+; Uninstall
 ; ---------------------------------------------------------------------------
 Section "Uninstall"
   Delete "$APPDATA\.minecraft\RagsMC-Launcher.exe"
