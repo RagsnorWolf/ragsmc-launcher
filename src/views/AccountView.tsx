@@ -86,7 +86,7 @@ export default function AccountView({ username, onSave, accounts, onAccountsChan
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={16}
-            placeholder="RagsPlayer"
+            placeholder="Escribe tu nombre de usuario..."
             spellCheck={false}
             className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-green-500/60 mb-3"
           />

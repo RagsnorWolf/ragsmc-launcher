@@ -43,9 +43,9 @@ const FALLBACK_VERSIONS: MinecraftVersion[] = [
 
 function loadUsername(): string {
   try {
-    return localStorage.getItem(USERNAME_KEY) || "RagsPlayer";
+    return localStorage.getItem(USERNAME_KEY) || "";
   } catch {
-    return "RagsPlayer";
+    return "";
   }
 }
 
@@ -261,6 +261,11 @@ export default function App({ onReady }: AppProps) {
   };
 
   const handlePlay = () => {
+    if (!username || username.trim() === "") {
+      setView("account");
+      toast("info", "Ingresa un nombre de usuario antes de jugar");
+      return;
+    }
     const inst = installations.find((i) => i.id === selectedInstallationId);
     if (inst) handlePlayInstallation(inst);
   };
