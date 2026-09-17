@@ -20,3 +20,19 @@ installer/package-lock.json
 
 # Build logs
 src-tauri/build-log.txt
+
+# Secrets & credentials
+.env
+.env.local
+.env.production
+.env.development
+secrets.json
+credentials.json
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+
+# Signing
+ragsmc-signing.pfx
