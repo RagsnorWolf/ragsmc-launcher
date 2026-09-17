@@ -27,7 +27,7 @@ const FABRIC_META_BASE: &str = "https://meta.fabricmc.net/v2";
 const ADOPTIUM_API: &str = "https://api.adoptium.net/v3/binary/latest";
 const USER_AGENT: &str = "RagsMC-Launcher/0.1.0";
 const LAUNCHER_NAME: &str = "RagsMC-Launcher";
-const LAUNCHER_VERSION: &str = "1.0.2";
+const LAUNCHER_VERSION: &str = "1.0.3";
 
 // ---------------------------------------------------------------------------
 // Tipos que viajan al frontend (deben coincidir con src/types.ts, camelCase)
@@ -1478,14 +1478,24 @@ fn ensure_version_installed(
     ensure_dir(&natives_dir)?;
 
     // Deduplicate libraries by group:artifact, keeping the highest version.
-    // Native classifier entries (e.g. "org.lwjgl:lwjgl:3.3.3:natives-windows") are NEVER
-    // deduped against the base entry — they must be kept separately for native extraction.
+    // Entries with native classifiers (e.g. "natives" field or classifiers with "natives-*")
+    // are NEVER deduped against the base entry — they must be kept separately for native extraction.
+    // Mojang 1.16.5+ uses TWO entries for the same library: one base (artifact only) and one
+    // with classifiers + natives. The dedup must keep both.
     let mut seen_libs: HashMap<String, (usize, &Library)> = HashMap::new();
     for (idx, lib) in vjson.libraries.iter().enumerate() {
         let parts: Vec<&str> = lib.name.split(':').collect();
         let key = if parts.len() > 3 && parts[3].starts_with("natives-") {
-            // Native entry: use full name so it's never deduped with the base
+            // New-format native entry: use full name so it's never deduped with the base
             lib.name.clone()
+        } else if lib.natives.is_some() || lib.downloads.as_ref()
+            .and_then(|d| d.classifiers.as_ref())
+            .map(|c| c.keys().any(|k| k.starts_with("natives-")))
+            .unwrap_or(false)
+        {
+            // Old-format native entry (has "natives" field or classifiers with "natives-*"):
+            // use full name so it's kept alongside the base entry for extraction
+            format!("{}:native", lib.name)
         } else if parts.len() >= 2 {
             // Regular entry: dedup by group:artifact
             format!("{}:{}", parts[0], parts[1])
@@ -1520,11 +1530,23 @@ fn ensure_version_installed(
             lib_done += 1;
             continue;
         }
-        // Skip native classifier JARs for classpath (they should only be extracted)
-        let is_native_classifier = lib.name.split(':').nth(3)
+        // Skip native-only JARs for classpath (they should only be extracted, not loaded).
+        // This covers THREE formats used across MC versions:
+        //   1. New format (MC 1.19+): name has 4+ parts, 4th starts with "natives-"
+        //      e.g. "org.lwjgl:lwjgl:3.3.3:natives-windows"
+        //   2. Old format with natives field (MC 1.7-1.18): same name as base, has "natives" map
+        //      e.g. "org.lwjgl.lwjgl:lwjgl-platform:2.9.1" with natives={"windows":"natives-windows"}
+        //   3. Old format with classifiers (MC 1.14-1.18): same name as base, has classifiers
+        //      e.g. "org.lwjgl:lwjgl:3.2.2" with classifiers={"natives-windows":{...}}
+        let is_native_only = lib.name.split(':').nth(3)
             .map(|c| c.starts_with("natives-"))
-            .unwrap_or(false);
-        if !is_native_classifier {
+            .unwrap_or(false)
+            || lib.natives.is_some()
+            || lib.downloads.as_ref()
+                .and_then(|d| d.classifiers.as_ref())
+                .map(|c| c.keys().any(|k| k.starts_with("natives-")))
+                .unwrap_or(false);
+        if !is_native_only {
             if let Some(jar_path) = library_jar_path(&root, lib)? {
                 if let Some((url, sha1, _size)) = library_download_url(lib, &jar_path, &root) {
                     download_file(&url, &jar_path, sha1.as_deref())?;
@@ -1564,7 +1586,7 @@ fn ensure_version_installed(
         }
         // New format: separate native library entries (e.g. "org.lwjgl:lwjgl:3.3.3:natives-windows")
         // These have artifact downloads. Extract to natives dir but DON'T add to classpath.
-        if is_native_classifier {
+        if is_native_only {
             if let Some(dl) = &lib.downloads {
                 if let Some(artifact) = &dl.artifact {
                     let rel = artifact.path.clone().unwrap_or_else(|| {

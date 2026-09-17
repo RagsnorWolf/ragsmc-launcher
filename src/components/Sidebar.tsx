@@ -93,7 +93,7 @@ export default function Sidebar({ view, onChange, username }: SidebarProps) {
             </span>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-xs font-medium text-zinc-200 truncate">{username || "Jugador"}</p>
-              <p className="text-[10px] text-zinc-600">RagsMC v1.0.2</p>
+              <p className="text-[10px] text-zinc-600">RagsMC v1.0.3</p>
             </div>
           </button>
 

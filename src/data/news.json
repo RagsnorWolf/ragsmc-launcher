@@ -1,5 +1,13 @@
 [
   {
+    "id": "0",
+    "title": "RagsMC Launcher v1.0.3",
+    "summary": "Auditoria completa de librerias nativas LWJGL. Corregido bug critico: las natives LWJGL ahora se extraen correctamente en TODAS las versiones de Minecraft (1.0 - 1.21+). Soporte para 4 eras de LWJGL: 2.9.x, 3.1.x, 3.2.x, 3.3.x.",
+    "date": "2026-09-15",
+    "type": "update",
+    "icon": "update"
+  },
+  {
     "id": "1",
     "title": "RagsMC Launcher v1.0.2",
     "summary": "Logo personalizado en launcher, instalador y accesos directos. Titulo de Minecraft mas grande en pantalla principal. Instalador NSIS instala en .minecraft como TLauncher.",
