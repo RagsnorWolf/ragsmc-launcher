@@ -1926,6 +1926,37 @@ fn offline_uuid(username: &str) -> String {
     )
 }
 
+/// Parsea el version_id y devuelve true si la versión base es <= 1.17.
+/// Ignora sufijos como -forge, -fabric, -quilt, etc.
+fn version_le_1_17(version_id: &str) -> bool {
+    let base = version_id
+        .split(|c: char| c == '-' || c == '_')
+        .next()
+        .unwrap_or("");
+    let mut parts = base.split('.');
+    let major: u32 = parts.next().and_then(|s| s.parse().ok()).unwrap_or(1);
+    let minor: u32 = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+    (major, minor) <= (1, 17)
+}
+
+/// Devuelve el userType correcto según la versión de Minecraft.
+/// - "mojang" y "msa" se respetan si el usuario los pidió explícitamente.
+/// - Para cualquier otro valor (offline, vacío, None):
+///     * "legacy" para versiones <= 1.17  (cliente no valida token)
+///     * "msa"    para versiones >= 1.18  (requiere estructura moderna)
+fn resolve_user_type(requested: Option<&str>, version_id: &str) -> String {
+    match requested {
+        Some("mojang") | Some("msa") => requested.unwrap().to_string(),
+        _ => {
+            if version_le_1_17(version_id) {
+                "legacy".to_string()
+            } else {
+                "msa".to_string()
+            }
+        }
+    }
+}
+
 fn substitute_vars(text: &str, vars: &HashMap<String, String>) -> String {
     let mut out = text.to_string();
     for (k, v) in vars {
@@ -2077,19 +2108,18 @@ fn build_launch_plan(config: &LaunchConfig, paths: &InstallPaths) -> Result<Laun
     let token = config
         .access_token
         .clone()
-        .filter(|t| !t.is_empty())
+        .filter(|t| !t.trim().is_empty())
         .unwrap_or_else(|| {
-            let ts = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            format!("{:x}", md5::compute(format!("{}-{}", username, ts)))
+            format!("{:x}", md5::compute(format!("{}-{}", username, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos())))
         });
-    let user_type = config
-        .user_type
-        .clone()
-        .filter(|t| !t.is_empty())
-        .unwrap_or_else(|| "legacy".to_string());
+    let user_type = resolve_user_type(config.user_type.as_deref(), &config.version);
+    if user_type == "legacy" {
+        eprintln!(
+            "[RagsMC] Lanzando '{}' sin sesión premium (userType={}). \
+             Servidores con online-mode=true rechazarán la conexión.",
+            config.version, user_type
+        );
+    }
 
     let classpath = paths
         .classpath_jars
@@ -3547,5 +3577,50 @@ mod tests {
         // Red real; si no hay internet el test falla con mensaje claro.
         let st = get_service_status().expect("status.mojang.com inalcanzable");
         assert!(!st.is_empty());
+    }
+
+    #[test]
+    fn offline_uuid_notch_es_conocido() {
+        assert_eq!(
+            offline_uuid("Notch"),
+            "b50ad385829d3141a2167e7d7539ba7f"
+        );
+    }
+
+    #[test]
+    fn user_type_1165_es_legacy() {
+        assert_eq!(resolve_user_type(None, "1.16.5"), "legacy");
+        assert_eq!(resolve_user_type(Some("offline"), "1.16.5"), "legacy");
+        assert_eq!(resolve_user_type(Some(""), "1.16.5"), "legacy");
+    }
+
+    #[test]
+    fn user_type_1122_es_legacy() {
+        assert_eq!(resolve_user_type(None, "1.12.2"), "legacy");
+        assert_eq!(resolve_user_type(None, "1.8.9"), "legacy");
+        assert_eq!(resolve_user_type(None, "1.7.10"), "legacy");
+    }
+
+    #[test]
+    fn user_type_120_es_msa() {
+        assert_eq!(resolve_user_type(None, "1.20.4"), "msa");
+        assert_eq!(resolve_user_type(None, "1.21.1"), "msa");
+        assert_eq!(resolve_user_type(None, "1.18.2"), "msa");
+    }
+
+    #[test]
+    fn user_type_mojang_se_respeta() {
+        assert_eq!(resolve_user_type(Some("mojang"), "1.16.5"), "mojang");
+        assert_eq!(resolve_user_type(Some("msa"), "1.16.5"), "msa");
+    }
+
+    #[test]
+    fn version_le_117_con_sufijos() {
+        assert!(version_le_1_17("1.16.5-fabric-0.14.0"));
+        assert!(version_le_1_17("1.12.2-forge-14.23.5.2860"));
+        assert!(version_le_1_17("1.8.9"));
+        assert!(!version_le_1_17("1.18.2"));
+        assert!(!version_le_1_17("1.20.4"));
+        assert!(!version_le_1_17("1.21.1"));
     }
 }
