@@ -2089,7 +2089,7 @@ fn build_launch_plan(config: &LaunchConfig, paths: &InstallPaths) -> Result<Laun
         .user_type
         .clone()
         .filter(|t| !t.is_empty())
-        .unwrap_or_else(|| "offline".to_string());
+        .unwrap_or_else(|| "legacy".to_string());
 
     let classpath = paths
         .classpath_jars

@@ -68,7 +68,7 @@ export interface LaunchConfig {
   username?: string;
   accessToken?: string;
   uuid?: string;
-  userType?: "mojang" | "msa" | "legacy" | "offline";
+  userType?: "mojang" | "legacy" | "offline";
   jvmArgs?: string;
   gameArgs?: string;
   gameDir?: string;
