@@ -140,7 +140,7 @@ export default function AccountView({ username, onSave, accounts, onAccountsChan
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-zinc-100 truncate">{acc.username}</p>
-                    <p className="text-[11px] text-zinc-500">{acc.type === "msa" ? "Microsoft" : "Offline"}</p>
+                    <p className="text-[11px] text-zinc-500">Offline</p>
                   </div>
                   {acc.selected ? (
                     <span className="flex items-center gap-1 text-xs text-green-400 font-semibold">
@@ -169,7 +169,7 @@ export default function AccountView({ username, onSave, accounts, onAccountsChan
         )}
 
         <p className="text-xs text-zinc-600 mt-4">
-          Cuentas offline: juegas sin iniciar sesión en Microsoft. Para servidores premium necesitas una cuenta de Microsoft.
+          Cuentas offline: juegas sin iniciar sesión en Microsoft.
         </p>
       </div>
     </div>

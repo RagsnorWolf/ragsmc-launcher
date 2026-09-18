@@ -256,10 +256,6 @@ export default function App({ onReady }: AppProps) {
     );
   };
 
-  const handleMicrosoftLogin = () => {
-    invoke("microsoft_login").catch((e) => toast("error", String(e)));
-  };
-
   const handlePlay = () => {
     if (!username || username.trim() === "") {
       setView("account");

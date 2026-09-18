@@ -481,7 +481,7 @@ export interface AccountEntry {
   id: string;
   username: string;
   uuid: string;
-  type: "msa" | "offline";
+  type: "offline";
   skinUrl?: string;
   selected: boolean;
 }

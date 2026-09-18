@@ -8,7 +8,7 @@ use minecraft::{
     get_installation_summary, get_launch_log, get_minecraft_versions, get_recommended_java,
     get_service_status, get_total_memory_gb,
     install_mod, launch_minecraft, list_backups, list_mods, list_resource_packs, list_shaders,
-    microsoft_login, open_game_folder, read_instance_log, restore_backup, save_installation,
+    open_game_folder, read_instance_log, restore_backup, save_installation,
     search_mods, select_account, start_log_stream, toggle_content,
 };
 
@@ -41,7 +41,6 @@ pub fn run() {
             list_backups,
             restore_backup,
             read_instance_log,
-            microsoft_login,
             list_mods,
             list_shaders,
             list_resource_packs,
