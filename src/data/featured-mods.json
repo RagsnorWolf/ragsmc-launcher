@@ -1,0 +1,56 @@
+[
+  {
+    "id": "sodium",
+    "name": "Sodium",
+    "description": "Optimización de rendimiento masiva para Minecraft",
+    "icon": "⚡",
+    "installed": false,
+    "slug": "sodium",
+    "category": "performance"
+  },
+  {
+    "id": "jei",
+    "name": "Just Enough Items (JEI)",
+    "description": "Ver recetas y usos de items en juego",
+    "icon": "📖",
+    "installed": false,
+    "slug": "jei",
+    "category": "utility"
+  },
+  {
+    "id": "journeymap",
+    "name": "JourneyMap",
+    "description": "Mapa en tiempo real, waypoints y teletransporte",
+    "icon": "🗺️",
+    "installed": false,
+    "slug": "journeymap",
+    "category": "utility"
+  },
+  {
+    "id": "xaero",
+    "name": "Xaero's Minimap",
+    "description": "Minimapa ligero, configurable y con waypoints",
+    "icon": "🧭",
+    "installed": false,
+    "slug": "xaero-minimap",
+    "category": "utility"
+  },
+  {
+    "id": "iris",
+    "name": "Iris Shaders",
+    "description": "Shaders compatibles con Sodium y Fabric",
+    "icon": "✨",
+    "installed": false,
+    "slug": "iris",
+    "category": "visual"
+  },
+  {
+    "id": "fabric-api",
+    "name": "Fabric API",
+    "description": "API base requerida para la mayoría de mods de Fabric",
+    "icon": "🔧",
+    "installed": false,
+    "slug": "fabric-api",
+    "category": "api"
+  }
+]

@@ -1,36 +1,64 @@
-import { Minus, Square, X } from "lucide-react";
+import { Minus, Maximize2, Minimize2, X, Zap } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useEffect, useState } from "react";
+
+const appWindow = getCurrentWindow();
 
 export default function Titlebar() {
-  const win = getCurrentWindow();
+  const [isMaximized, setIsMaximized] = useState(false);
 
-  const btn =
-    "flex items-center justify-center w-11 h-10 text-zinc-400 transition-colors hover:text-white hover:bg-white/10";
+  useEffect(() => {
+    appWindow.isMaximized().then(setIsMaximized);
+    const unlisten = appWindow.onResized(() => {
+      appWindow.isMaximized().then(setIsMaximized);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
+  const handleMinimize = () => appWindow.minimize();
+  const handleMaximize = async () => {
+    await appWindow.toggleMaximize();
+    setIsMaximized(await appWindow.isMaximized());
+  };
+  const handleClose = () => appWindow.close();
 
   return (
-    <div className="flex items-center h-10 bg-[#111111] border-b border-white/5 select-none flex-shrink-0">
-      <div
-        data-tauri-drag-region
-        className="flex items-center gap-2.5 px-4 flex-1 h-full cursor-default"
-      >
+    <div
+      data-tauri-drag-region
+      onDoubleClick={handleMaximize}
+      className="h-10 flex items-center justify-between px-3 bg-black/40 border-b border-white/5 select-none flex-shrink-0"
+    >
+      {/* Logo/Title on the left */}
+      <div className="flex items-center gap-2" data-tauri-drag-region>
         <div className="w-5 h-5 rounded-md bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center">
           <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
         <span className="text-sm font-semibold tracking-wide text-zinc-100">RagsMC</span>
+        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-500 opacity-70">LAUNCHER</span>
       </div>
-      <div className="flex items-center h-full">
-        <button className={btn} aria-label="Minimizar" onClick={() => win.minimize()}>
+
+      {/* Window control buttons on the right */}
+      <div className="flex items-center h-full gap-1">
+        <button
+          onClick={handleMinimize}
+          className="w-10 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+          title="Minimizar"
+        >
           <Minus className="w-4 h-4" />
         </button>
-        <button className={btn} aria-label="Maximizar" onClick={() => win.toggleMaximize()}>
-          <Square className="w-3.5 h-3.5" />
+        <button
+          onClick={handleMaximize}
+          className="w-10 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+          title={isMaximized ? "Restaurar" : "Maximizar"}
+        >
+          {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
         <button
-          className="flex items-center justify-center w-11 h-10 text-zinc-400 transition-colors hover:text-white hover:bg-red-600"
-          aria-label="Cerrar"
-          onClick={() => win.close()}
+          onClick={handleClose}
+          className="w-10 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600/80 rounded transition-colors"
+          title="Cerrar"
         >
           <X className="w-4 h-4" />
         </button>

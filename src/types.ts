@@ -11,7 +11,7 @@ export interface ServiceStatusItem {
 
 export type EditionType = "java" | "bedrock";
 
-export type ViewType = "play" | "installations" | "settings" | "account" | "mods" | "console";
+export type ViewType = "play" | "installations" | "settings" | "account" | "mods" | "console" | "resources" | "shaders";
 
 export interface MinecraftVersion {
   id: string;
@@ -494,3 +494,63 @@ export interface UpdateInfo {
   release_notes: string | null;
   release_date: string | null;
 }
+
+export type Edition = "java" | "bedrock";
+
+export interface NewsEntry {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  image?: string;
+  badge?: string;
+  badgeColor?: "green" | "blue" | "purple" | "amber";
+}
+
+export interface ModEntry {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  installed: boolean;
+  slug: string;
+  category: "utility" | "content" | "performance" | "visual" | "api";
+}
+
+export interface ActivityEntry {
+  id: string;
+  title: string;
+  subtitle: string;
+  timestamp: string;
+  icon?: string;
+  type: "welcome" | "install" | "mod" | "shader" | "update";
+}
+
+export interface DownloadProgress {
+  task: string;
+  current: string;
+  total: string;
+  percentage: number;
+  paused: boolean;
+}
+
+export interface SocialLinkConfig {
+  twitch: string;
+  tiktok: string;
+  youtube: string;
+  whatsapp: string;
+}
+
+export const SOCIAL_LINKS: SocialLinkConfig = {
+  twitch: "https://www.twitch.tv/ragsnorwolf",
+  tiktok: "https://www.tiktok.com/@ragsnorwolf",
+  youtube: "https://youtube.com/@ragsnorwolf_games?si=I35YLvdu7ush",
+  whatsapp: "https://whatsapp.com/channel/0029VbBOkGf9WtC0e7cYaK0B",
+};
+
+export const SOCIAL_COLORS = {
+  twitch: "#9146FF",
+  tiktok: "#FFFFFF",
+  youtube: "#FF0000",
+  whatsapp: "#25D366",
+} as const;

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "title": "¡Bienvenido de vuelta!",
+    "subtitle": "RagsnorWolf",
+    "timestamp": "Hoy",
+    "type": "welcome"
+  },
+  {
+    "id": "2",
+    "title": "Versión 1.20.4 instalada",
+    "subtitle": "Java Edition",
+    "timestamp": "Ayer",
+    "type": "install"
+  },
+  {
+    "id": "3",
+    "title": "Sodium instalado",
+    "subtitle": "Mod de rendimiento",
+    "timestamp": "2 días",
+    "type": "mod"
+  },
+  {
+    "id": "4",
+    "title": "BSL Shaders v8.2 aplicado",
+    "subtitle": "Shader",
+    "timestamp": "3 días",
+    "type": "shader"
+  },
+  {
+    "id": "5",
+    "title": "JourneyMap instalado",
+    "subtitle": "Mod de mapa",
+    "timestamp": "5 días",
+    "type": "mod"
+  },
+  {
+    "id": "6",
+    "title": "Launcher actualizado a v2.0",
+    "subtitle": "Actualización",
+    "timestamp": "1 semana",
+    "type": "update"
+  }
+]

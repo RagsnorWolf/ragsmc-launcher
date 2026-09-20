@@ -15,7 +15,7 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::time::Duration;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
 
 // ---------------------------------------------------------------------------
@@ -2851,6 +2851,22 @@ fn background_launch(app: &AppHandle, config: &LaunchConfig) {
                         1,
                         1,
                     );
+                    // Esperar a que el juego termine y reabrir el launcher.
+                    let exit_code = match child.wait() {
+                        Ok(status) => status.code(),
+                        Err(_) => None,
+                    };
+                    emit_launch(
+                        app,
+                        "game-closed",
+                        format!("Minecraft terminado (código {:?}).", exit_code),
+                        1,
+                        1,
+                    );
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
             }
         }

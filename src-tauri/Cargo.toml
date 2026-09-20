@@ -27,6 +27,8 @@ zip = "2"
 sha1 = "0.10"
 md5 = "0.7"
 uuid = { version = "1", features = ["v4", "serde"] }
+tauri-plugin-shell = "2.3.6"
+tauri-plugin-window-state = "2.4.1"
 
 [dev-dependencies]
 tempfile = "3"

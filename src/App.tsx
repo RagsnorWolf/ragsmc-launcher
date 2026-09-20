@@ -11,6 +11,8 @@ import SettingsView, { type LauncherSettings } from "./views/SettingsView";
 import AccountView from "./views/AccountView";
 import ModsManagerView from "./views/ModsManagerView";
 import ConsoleView from "./views/ConsoleView";
+import RightPanel from "./components/RightPanel";
+import FooterBar from "./components/FooterBar";
 import { toast } from "./components/Toasts";
 import type {
   AccountEntry,
@@ -73,6 +75,17 @@ interface AppProps {
   onReady?: () => void;
 }
 
+// Hook para detectar tamaño de ventana y modo compacto
+function useWindowSize() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return width;
+}
+
 export default function App({ onReady }: AppProps) {
   const [view, setView] = useState<ViewType>("play");
   const [versions, setVersions] = useState<MinecraftVersion[]>([]);
@@ -84,6 +97,10 @@ export default function App({ onReady }: AppProps) {
   const [settings, setSettings] = useState<LauncherSettings>(loadSettings);
   const [launch, setLaunch] = useState<LaunchStatus>({ open: false, phase: "working", message: "", logs: [] });
   const [accounts, setAccounts] = useState<AccountEntry[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const windowWidth = useWindowSize();
+  const isCompact = windowWidth < 1200;
 
   const applyVersions = (list: MinecraftVersion[]) => {
     if (list.length > 0) {
@@ -191,6 +208,30 @@ export default function App({ onReady }: AppProps) {
     };
   }, []);
 
+  // Iniciar maximizado con taskbar visible (salir de fullscreen guardado por sesiones anteriores)
+  useEffect(() => {
+    const win = getCurrentWindow();
+    win.setFullscreen(false).catch(() => {}).finally(() => {
+      win.maximize().catch(() => {});
+    });
+    setIsFullscreen(false);
+  }, []);
+
+  // F11 para alternar pantalla completa
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        const win = getCurrentWindow();
+        const isFs = await win.isFullscreen();
+        await win.setFullscreen(!isFs);
+        setIsFullscreen(!isFs);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const runLaunch = async (config: LaunchConfig, label: string) => {
     stopListening();
     setLaunch({ open: true, phase: "working", message: `Preparando ${label}...`, current: 0, total: 0 });
@@ -199,9 +240,16 @@ export default function App({ onReady }: AppProps) {
         const p = event.payload;
         if (p.stage === "done") {
           setLaunch({ open: true, phase: "done", message: p.message, current: 1, total: 1, stage: p.stage });
+          // Ocultar (no cerrar) para poder reabrir al terminar el juego
           setTimeout(() => {
-            getCurrentWindow().close();
+            getCurrentWindow().hide().catch(() => {});
           }, 1500);
+        } else if (p.stage === "game-closed") {
+          stopListening();
+          setLaunch((s) => ({ ...s, open: false }));
+          getCurrentWindow().show().catch(() => {});
+          getCurrentWindow().setFocus().catch(() => {});
+          toast("info", "Minecraft cerrado. Launcher disponible de nuevo.");
         } else if (p.stage === "error") {
           setLaunch({ open: true, phase: "error", message: p.message, stage: p.stage });
         } else {
@@ -303,45 +351,80 @@ export default function App({ onReady }: AppProps) {
     invoke("delete_installation", { id }).catch(() => {});
   };
 
+  const openGameFolder = () => {
+    import("@tauri-apps/api/core").then(({ invoke }) =>
+      invoke("open_game_folder", {}).catch(() => {})
+    );
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0a] text-zinc-100 overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-[#0a0e0d] text-zinc-100 overflow-hidden">
       <Titlebar />
-      <div className="flex flex-1 min-h-0">
-        <Sidebar view={view} onChange={setView} username={username} />
-        {view === "play" && (
-          <PlayView
-            installations={installations}
-            selectedId={selectedInstallationId}
-            onSelect={setSelectedInstallationId}
-            onPlay={handlePlay}
-            launching={launch.open && launch.phase === "working"}
-            onCreateNew={() => setView("installations")}
-          />
-        )}
-        {view === "installations" && (
-          <InstallationsView
-            installations={installations}
-            versions={versions}
-            versionsLoading={versionsLoading}
-            onPlay={handlePlayInstallation}
-            onDelete={handleDeleteInstallation}
-            onCreate={handleCreateInstallation}
-            onRefreshVersions={refreshVersions}
-          />
-        )}
-        {view === "settings" && (
-          <SettingsView settings={settings} onChange={patchSettings} />
-        )}
-        {view === "account" && (
-          <AccountView username={username} onSave={saveUsername} accounts={accounts} onAccountsChange={handleAccountChange} />
-        )}
-        {view === "mods" && (
-          <ModsManagerView installations={installations} selectedInstallationId={selectedInstallationId} />
-        )}
-        {view === "console" && (
-          <ConsoleView installations={installations} selectedInstallationId={selectedInstallationId} />
-        )}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar 
+          view={view} 
+          onChange={setView} 
+          username={username}
+          onOpenGameFolder={openGameFolder}
+          collapsed={isCompact}
+        />
+        <main className="flex-1 overflow-y-auto">
+          {view === "play" && (
+            <PlayView
+              installations={installations}
+              selectedId={selectedInstallationId}
+              onSelect={setSelectedInstallationId}
+              onPlay={handlePlay}
+              launching={launch.open && launch.phase === "working"}
+              onCreateNew={() => setView("installations")}
+            />
+          )}
+          {view === "installations" && (
+            <InstallationsView
+              installations={installations}
+              versions={versions}
+              versionsLoading={versionsLoading}
+              onPlay={handlePlayInstallation}
+              onDelete={handleDeleteInstallation}
+              onCreate={handleCreateInstallation}
+              onRefreshVersions={refreshVersions}
+            />
+          )}
+          {view === "settings" && (
+            <SettingsView settings={settings} onChange={patchSettings} />
+          )}
+          {view === "account" && (
+            <AccountView username={username} onSave={saveUsername} accounts={accounts} onAccountsChange={handleAccountChange} />
+          )}
+          {view === "mods" && (
+            <ModsManagerView installations={installations} selectedInstallationId={selectedInstallationId} />
+          )}
+          {view === "console" && (
+            <ConsoleView installations={installations} selectedInstallationId={selectedInstallationId} />
+          )}
+          {view === "resources" && (
+            <InstallationsView
+              installations={installations}
+              versions={versions}
+              versionsLoading={versionsLoading}
+              onPlay={handlePlayInstallation}
+              onDelete={handleDeleteInstallation}
+              onCreate={handleCreateInstallation}
+              onRefreshVersions={refreshVersions}
+            />
+          )}
+          {view === "shaders" && (
+            <ModsManagerView installations={installations} selectedInstallationId={selectedInstallationId} />
+          )}
+        </main>
+        <RightPanel 
+          collapsed={isCompact}
+          installations={installations}
+          selectedInstallationId={selectedInstallationId}
+          onOpenGameFolder={openGameFolder}
+        />
       </div>
+      <FooterBar status="connected" version="2.0.0" />
       {versionsError && view === "play" && (
         <div className="px-4 py-2 bg-yellow-500/10 border-t border-yellow-500/20 text-xs text-yellow-200/80 text-center">
           Sin conexión a Mojang: mostrando versiones de respaldo. Revisa tu internet.
