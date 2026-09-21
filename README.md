@@ -80,7 +80,7 @@ Abrí un [Issue](https://github.com/RagsnorWolf/ragsmc-launcher/issues) indicand
 * Qué estabas haciendo cuando ocurrió el problema.
 * Qué error apareció.
 * Capturas o registros si son necesarios.
-o simplemente puedes entrar a la Pagina Web y reportarlo 
+O simplemente podés entrar a la página web y reportarlo. 
 ---
 
 ## 📋 Versiones
