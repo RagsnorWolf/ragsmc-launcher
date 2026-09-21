@@ -45,7 +45,39 @@ fn content_type_png() -> Header {
 }
 
 fn content_type_json() -> Header {
-    Header::from_bytes(&b"Content-Type"[..], &b"application/json"[..]).unwrap()
+    Header::from_bytes(&b"Content-Type"[..], &b"application/json; charset=utf-8"[..]).unwrap()
+}
+
+/// Error con forma Yggdrasil: {"error","errorMessage"}.
+fn ygg_error(status: u16, error: &str, message: &str) -> Response<std::io::Cursor<Vec<u8>>> {
+    json_body(
+        serde_json::json!({"error": error, "errorMessage": message}).to_string(),
+    )
+    .with_status_code(StatusCode(status))
+}
+
+fn ygg_forbidden_token() -> Response<std::io::Cursor<Vec<u8>>> {
+    ygg_error(403, "ForbiddenOperationException", "Invalid token.")
+}
+
+/// Metadata de la API (GET /): OBLIGATORIA para authlib-injector.
+/// Sin esto el injector aborta con "Failed to fetch metadata".
+/// skinDomains incluye "localhost" o el juego rechaza nuestras texturas
+/// ("Textures payload has been tampered with"). Sin firmas: no se anuncia
+/// signaturePublickey porque nunca firmamos atributos.
+fn ygg_metadata() -> Response<std::io::Cursor<Vec<u8>>> {
+    json_body(
+        serde_json::json!({
+            "meta": {
+                "serverName": "RagsMC Offline",
+                "implementationName": "RagsMC OfflineSkinServer",
+                "implementationVersion": "1.0.4",
+                "feature.non_email_login": true,
+            },
+            "skinDomains": ["localhost"],
+        })
+        .to_string(),
+    )
 }
 
 fn json_body(body: String) -> Response<std::io::Cursor<Vec<u8>>> {
@@ -90,7 +122,7 @@ pub fn ygg_profile_json(
     let model = active
         .as_ref()
         .map(|e| e.model.as_str().to_string())
-        .unwrap_or_else(|| "classic".to_string());
+        .unwrap_or_else(|| "default".to_string());
     let skin_uuid = active
         .map(|e| e.uuid)
         .unwrap_or_else(|| uuid_nodash.to_string());
@@ -165,7 +197,7 @@ fn ygg_authenticate(request: &mut tiny_http::Request) -> Response<std::io::Curso
         .trim()
         .to_string();
     if username.is_empty() {
-        return json_400("falta username".to_string());
+        return ygg_error(400, "IllegalArgumentException", "Falta username.");
     }
     let client_token = body
         .get("clientToken")
@@ -208,7 +240,7 @@ fn ygg_refresh(request: &mut tiny_http::Request) -> Response<std::io::Cursor<Vec
             Some((user, fresh))
         });
     let Some((username, fresh)) = username else {
-        return json_400("token inválido".to_string());
+        return ygg_forbidden_token();
     };
     let id = crate::minecraft::offline_uuid(&username);
     json_body(
@@ -231,7 +263,7 @@ fn ygg_validate(request: &mut tiny_http::Request) -> Response<std::io::Cursor<Ve
     if ok {
         ygg_no_content()
     } else {
-        json_400("token inválido".to_string())
+        ygg_forbidden_token()
     }
 }
 
@@ -244,7 +276,7 @@ fn ygg_join(request: &mut tiny_http::Request) -> Response<std::io::Cursor<Vec<u8
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if access_token.is_empty() || server_id.is_empty() || profile_id.is_empty() {
-        return json_400("join incompleto".to_string());
+        return ygg_error(400, "IllegalArgumentException", "Join incompleto.");
     }
     let username = sessions()
         .lock()
@@ -258,7 +290,7 @@ fn ygg_join(request: &mut tiny_http::Request) -> Response<std::io::Cursor<Vec<u8
             Some(user)
         });
     if username.is_none() {
-        return json_400("token inválido".to_string());
+        return ygg_forbidden_token();
     }
     ygg_no_content()
 }
@@ -481,7 +513,8 @@ fn handle_request(
                 .unwrap_or("");
             let uuid = uuid.replace('-', "").to_lowercase();
             if uuid.len() != 32 || !uuid.chars().all(|c| c.is_ascii_hexdigit()) {
-                json_404("uuid inválido")
+                // Perfil inexistente => 204 según spec Yggdrasil.
+                Response::from_data(Vec::new()).with_status_code(StatusCode(204))
             } else {
                 // Perfil por uuid: se resuelve contra la skin activa local.
                 // (Offline de un jugador: el uuid del perfil y el de la skin
@@ -492,6 +525,8 @@ fn handle_request(
             }
         }
         (Method::Post, "/api/profiles/minecraft") => ygg_profiles_lookup(&mut request),
+        // Metadata de la API: la pide authlib-injector al arrancar.
+        (Method::Get, "/") => ygg_metadata(),
         _ => json_404("ruta desconocida"),
     };
 
@@ -665,7 +700,7 @@ mod tests {
             "url: {}",
             url
         );
-        assert_eq!(inner["textures"]["SKIN"]["metadata"]["model"], "classic");
+        assert_eq!(inner["textures"]["SKIN"]["metadata"]["model"], "default");
         // id == offline uuid v3 del nombre
         assert_eq!(json["id"], crate::minecraft::offline_uuid("RagsnorWolf"));
     }
@@ -768,12 +803,32 @@ mod tests {
         assert_eq!(status, 200);
         let refreshed: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_ne!(refreshed["accessToken"].as_str().unwrap(), token);
-        let (status, _) = http_post(
+        let (status, body) = http_post(
             port,
             "/authserver/validate",
             serde_json::json!({"accessToken": token, "clientToken": "ct-1"}),
         );
-        assert_eq!(status, 400);
+        assert_eq!(status, 403);
+        let err: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(err["error"], "ForbiddenOperationException");
+    }
+
+    #[test]
+    fn test_yggdrasil_metadata_obligatoria() {
+        // authlib-injector aborta sin este documento (FileNotFoundException).
+        let dir = tempfile::tempdir().unwrap();
+        let port = start_test_server(dir.path().to_path_buf());
+        let (status, body, ctype) = http_get(port, "/");
+        assert_eq!(status, 200);
+        assert!(ctype.contains("application/json"), "ctype: {}", ctype);
+        let meta: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(meta.get("meta").is_some());
+        assert_eq!(meta["meta"]["feature.non_email_login"], true);
+        let domains = meta["skinDomains"].as_array().unwrap();
+        assert!(
+            domains.iter().any(|d| d == "localhost"),
+            "localhost debe estar en skinDomains"
+        );
     }
 
     #[test]

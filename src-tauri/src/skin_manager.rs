@@ -42,9 +42,11 @@ impl SkinModel {
         }
     }
 
+    /// Nombre en protocolo Yggdrasil: `default` (brazos anchos) o `slim`.
+    /// ("classic" es vocabulario de la UI; en el wire va "default".)
     pub fn as_str(&self) -> &'static str {
         match self {
-            SkinModel::Classic => "classic",
+            SkinModel::Classic => "default",
             SkinModel::Slim => "slim",
         }
     }
