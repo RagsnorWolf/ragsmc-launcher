@@ -36,3 +36,6 @@ credentials.json
 
 # Signing
 ragsmc-signing.pfx
+launch-output.txt
+launch-cmd.txt
+*.log
