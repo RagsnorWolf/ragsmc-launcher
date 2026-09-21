@@ -28,7 +28,7 @@ const FABRIC_META_BASE: &str = "https://meta.fabricmc.net/v2";
 const ADOPTIUM_API: &str = "https://api.adoptium.net/v3/binary/latest";
 const USER_AGENT: &str = "RagsMC-Launcher/0.1.0";
 const LAUNCHER_NAME: &str = "RagsMC-Launcher";
-const LAUNCHER_VERSION: &str = "1.0.3";
+const LAUNCHER_VERSION: &str = "1.0.4";
 
 // ---------------------------------------------------------------------------
 // FASE 0: Revertir parcheo del JSON oficial (backups .ragsmc-backup)
@@ -351,6 +351,10 @@ pub struct LaunchConfig {
     pub loader_version: Option<String>,
     pub java_path: String,
     pub java_version: Option<u32>,
+    pub java_runtime: Option<String>,
+    pub java_arch: Option<String>,
+    pub force_gpu: Option<bool>,
+    pub force_cpu: Option<bool>,
     pub memory: u32,
     pub width: u32,
     pub height: u32,
@@ -595,6 +599,44 @@ pub fn data_root() -> Result<PathBuf, String> {
 fn ensure_dir(path: &Path) -> Result<(), String> {
     fs::create_dir_all(path)
         .map_err(|e| format!("No se pudo crear {}: {}", path.display(), e))
+}
+
+/// Valor de preferencia de GPU dedicada (2 = alto rendimiento).
+fn gpu_preference_value() -> &'static str {
+    "GpuPreference=2;"
+}
+
+/// Registra la preferencia de GPU dedicada para un ejecutable (Windows).
+/// Usa HKCU\...\UserGpuPreferences (mecanismo oficial, por usuario, sin admin).
+/// No es fatal: si falla, el juego arranca igual con la GPU por defecto.
+#[cfg(target_os = "windows")]
+fn prefer_discrete_gpu(exe_path: &Path) {
+    use winreg::{enums::*, RegKey};
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    match hkcu.create_subkey("SOFTWARE\\Microsoft\\DirectX\\UserGpuPreferences") {
+        Ok((key, _)) => {
+            let name = exe_path.to_string_lossy().to_string();
+            if let Err(e) = key.set_value(&name, &gpu_preference_value()) {
+                eprintln!("[RagsMC] No se pudo fijar GPU dedicada: {}", e);
+            }
+        }
+        Err(e) => eprintln!("[RagsMC] No se pudo abrir UserGpuPreferences: {}", e),
+    }
+}
+
+/// Evita que los procesos hijos abran ventanas de consola visibles (Windows).
+/// Sin esto, cada sonda `java -version` o `powershell` parpadea una ventana CMD.
+fn hide_console_window(cmd: &mut StdCommand) {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW (0x08000000): sin consola visible ni parpadeos.
+        cmd.creation_flags(0x08000000);
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = cmd;
+    }
 }
 
 fn http_client() -> Result<reqwest::blocking::Client, String> {
@@ -1285,6 +1327,8 @@ fn run_modded_installer(
         .arg("--install-client")
         .arg(target_root)
         .current_dir(target_root);
+    // Instalador headless con log a archivo: sin ventana de consola.
+    hide_console_window(&mut cmd);
     match fs::OpenOptions::new().create(true).append(true).open(&log_path) {
         Ok(out) => match out.try_clone() {
             Ok(err) => {
@@ -1384,7 +1428,7 @@ fn fetch_modded_installer_profile(
         .map(|j| j.major_version)
         .unwrap_or_else(|| heuristic_min_java(&config.version))
         .max(8);
-    let java = ensure_java(required, "")?;
+    let java = ensure_java(required, "", "auto", "auto")?;
     emit_launch(app, "downloading", format!("Preparando base vanilla {}...", config.version), 0, 0);
     let base_resolved = ResolvedVersion {
         dir_id: config.version.clone(),
@@ -1976,7 +2020,10 @@ fn parse_java_major(version_output: &str) -> Option<u32> {
 }
 
 fn java_major_of(java_bin: &Path) -> Option<u32> {
-    let out = StdCommand::new(java_bin).arg("-version").output().ok()?;
+    let mut probe = StdCommand::new(java_bin);
+    probe.arg("-version");
+    hide_console_window(&mut probe);
+    let out = probe.output().ok()?;
     let text = format!(
         "{}{}",
         String::from_utf8_lossy(&out.stdout),
@@ -2074,35 +2121,107 @@ fn find_java(required_major: u32) -> Option<PathBuf> {
     fallback
 }
 
-fn download_temurin(major: u32) -> Result<PathBuf, String> {
-    let root = data_root()?;
-    let runtimes = root.join("runtimes");
-    ensure_dir(&runtimes)?;
-    let dest_dir = runtimes.join(format!("temurin-{}", major));
-    let probe = dest_dir.join("bin").join("java.exe");
-    if probe.exists() {
-        return Ok(probe);
+/// Arquitectura del host para descargas (tokens de Adoptium/GraalVM/Mesa).
+fn host_arch() -> &'static str {
+    match std::env::consts::ARCH {
+        "x86" => "x86",
+        "aarch64" => "aarch64",
+        _ => "x64",
     }
-    let url = format!(
-        "{}/latest/{}/ga/windows/x64/jre/hotspot/normal/eclipse",
-        ADOPTIUM_API, major
-    );
-    let zip_path = runtimes.join(format!("temurin-{}-jre.zip", major));
-    download_file(&url, &zip_path, None)?;
-    // Extrae a carpeta temporal y mueve el contenido (el zip trae 1 nivel raíz)
-    let tmp = runtimes.join(format!(".tmp-temurin-{}", major));
+}
+
+/// URL del JRE Temurin (Adoptium API): windows/{arch}/jre.
+/// (ADOPTIUM_API ya termina en /latest: no duplicarlo, daría 404.)
+fn adoptium_jre_url(major: u32, arch: &str) -> String {
+    format!(
+        "{}/{}/ga/windows/{}/jre/hotspot/normal/eclipse",
+        ADOPTIUM_API, major, arch
+    )
+}
+
+/// Nombre del asset de GraalVM Community para major/arch.
+/// GraalVM CE moderno solo existe para 17+ y x64/aarch64 (sin x86).
+fn graalvm_asset_name(major: u32, arch: &str) -> Option<String> {
+    if major < 17 {
+        return None;
+    }
+    let arch_token = match arch {
+        "x64" => "x64",
+        "aarch64" => "aarch64",
+        _ => return None,
+    };
+    Some(format!(
+        "graalvm-community-jdk-{}_windows-{}_bin.zip",
+        major, arch_token
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAsset {
+    name: String,
+    browser_download_url: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhRelease {
+    tag_name: String,
+    assets: Vec<GhAsset>,
+}
+
+fn github_json<T: for<'de> serde::Deserialize<'de>>(url: &str) -> Result<T, String> {
+    let client = http_client()?;
+    client
+        .get(url)
+        .send()
+        .map_err(|e| format!("Error consultando GitHub: {}", e))?
+        .json()
+        .map_err(|e| format!("Respuesta inválida de GitHub: {}", e))
+}
+
+/// Busca en los releases el asset cuyo nombre coincide exactamente.
+fn github_asset_url(owner: &str, repo: &str, tag_prefix: Option<&str>, asset_name: &str) -> Result<String, String> {
+    let url = if let Some(prefix) = tag_prefix {
+        let releases: Vec<GhRelease> = github_json(&format!(
+            "https://api.github.com/repos/{}/{}/releases?per_page=100",
+            owner, repo
+        ))?;
+        let rel = releases
+            .iter()
+            .find(|r| r.tag_name.starts_with(prefix))
+            .ok_or_else(|| format!("Sin releases {}* en {}/{}", prefix, owner, repo))?;
+        rel.assets
+            .iter()
+            .find(|a| a.name == asset_name)
+            .map(|a| a.browser_download_url.clone())
+            .ok_or_else(|| format!("Asset {} no encontrado en {}", asset_name, rel.tag_name))?
+    } else {
+        let rel: GhRelease = github_json(&format!(
+            "https://api.github.com/repos/{}/{}/releases/latest",
+            owner, repo
+        ))?;
+        rel.assets
+            .into_iter()
+            .find(|a| a.name == asset_name)
+            .map(|a| a.browser_download_url)
+            .ok_or_else(|| format!("Asset {} no encontrado en latest", asset_name))?
+    };
+    Ok(url)
+}
+
+/// Extrae un .zip a tmp y mueve su única carpeta raíz a dest_dir.
+fn unzip_single_root(zip_path: &Path, dest_dir: &Path, tmp: &Path, label: &str) -> Result<(), String> {
     if tmp.exists() {
-        let _ = fs::remove_dir_all(&tmp);
+        let _ = fs::remove_dir_all(tmp);
     }
-    ensure_dir(&tmp)?;
+    ensure_dir(tmp)?;
     let file =
-        fs::File::open(&zip_path).map_err(|e| format!("No se pudo abrir JRE: {}", e))?;
+        fs::File::open(zip_path).map_err(|e| format!("No se pudo abrir {}: {}", label, e))?;
     let mut archive =
-        zip::ZipArchive::new(file).map_err(|e| format!("JRE corrupto: {}", e))?;
+        zip::ZipArchive::new(file).map_err(|e| format!("{} corrupto: {}", label, e))?;
     for i in 0..archive.len() {
         let mut entry = archive
             .by_index(i)
-            .map_err(|e| format!("Error en JRE: {}", e))?;
+            .map_err(|e| format!("Error en {}: {}", label, e))?;
         let Some(out_path) = entry.enclosed_name() else {
             continue;
         };
@@ -2115,30 +2234,56 @@ fn download_temurin(major: u32) -> Result<PathBuf, String> {
             ensure_dir(parent)?;
         }
         let mut out = fs::File::create(&out_path)
-            .map_err(|e| format!("No se pudo extraer JRE: {}", e))?;
+            .map_err(|e| format!("No se pudo extraer {}: {}", label, e))?;
         std::io::copy(&mut entry, &mut out)
-            .map_err(|e| format!("Error extrayendo JRE: {}", e))?;
+            .map_err(|e| format!("Error extrayendo {}: {}", label, e))?;
     }
-    // El zip de Temurin contiene una sola carpeta raíz: muévela a dest_dir
+    // El zip trae una sola carpeta raíz: muévela a dest_dir
     let mut moved = false;
-    if let Ok(entries) = fs::read_dir(&tmp) {
+    if let Ok(entries) = fs::read_dir(tmp) {
         for e in entries.flatten() {
             if e.path().is_dir() {
                 if dest_dir.exists() {
-                    let _ = fs::remove_dir_all(&dest_dir);
+                    let _ = fs::remove_dir_all(dest_dir);
                 }
-                fs::rename(e.path(), &dest_dir)
-                    .map_err(|e| format!("No se pudo instalar JRE: {}", e))?;
+                fs::rename(e.path(), dest_dir)
+                    .map_err(|e| format!("No se pudo instalar {}: {}", label, e))?;
                 moved = true;
                 break;
             }
         }
     }
-    let _ = fs::remove_dir_all(&tmp);
-    let _ = fs::remove_file(&zip_path);
+    let _ = fs::remove_dir_all(tmp);
     if !moved {
-        return Err("No se pudo instalar el JRE descargado".to_string());
+        return Err(format!("No se pudo instalar el {} descargado", label));
     }
+    Ok(())
+}
+
+fn download_temurin(major: u32) -> Result<PathBuf, String> {
+    download_temurin_arch(major, host_arch())
+}
+
+fn download_temurin_arch(major: u32, arch: &str) -> Result<PathBuf, String> {
+    let root = data_root()?;
+    let runtimes = root.join("runtimes");
+    ensure_dir(&runtimes)?;
+    let dest_dir = runtimes.join(format!("temurin-{}-{}", major, arch));
+    let probe = dest_dir.join("bin").join("java.exe");
+    if probe.exists() {
+        return Ok(probe);
+    }
+    // Compatibilidad: reutiliza temurin-{major} viejo si ya existe
+    let legacy = runtimes.join(format!("temurin-{}", major));
+    if legacy.join("bin").join("java.exe").exists() {
+        return Ok(legacy.join("bin").join("java.exe"));
+    }
+    let url = adoptium_jre_url(major, arch);
+    let zip_path = runtimes.join(format!("temurin-{}-{}-jre.zip", major, arch));
+    download_file(&url, &zip_path, None)?;
+    let tmp = runtimes.join(format!(".tmp-temurin-{}-{}", major, arch));
+    unzip_single_root(&zip_path, &dest_dir, &tmp, "JRE")?;
+    let _ = fs::remove_file(&zip_path);
     let bin = dest_dir.join("bin").join("java.exe");
     if bin.exists() {
         Ok(bin)
@@ -2147,7 +2292,247 @@ fn download_temurin(major: u32) -> Result<PathBuf, String> {
     }
 }
 
-fn ensure_java(required_major: u32, preferred: &str) -> Result<PathBuf, String> {
+fn download_graalvm(major: u32, arch: &str) -> Result<PathBuf, String> {
+    let root = data_root()?;
+    let runtimes = root.join("runtimes");
+    ensure_dir(&runtimes)?;
+    let dest_dir = runtimes.join(format!("graalvm-{}-{}", major, arch));
+    let probe = dest_dir.join("bin").join("java.exe");
+    if probe.exists() {
+        return Ok(probe);
+    }
+    let asset = graalvm_asset_name(major, arch).ok_or_else(|| {
+        format!("GraalVM no disponible para Java {} {}", major, arch)
+    })?;
+    let url = github_asset_url(
+        "graalvm",
+        "graalvm-ce-builds",
+        Some(&format!("jdk-{}.", major)),
+        &asset,
+    )?;
+    let zip_path = runtimes.join(format!("graalvm-{}-{}-jdk.zip", major, arch));
+    download_file(&url, &zip_path, None)?;
+    let tmp = runtimes.join(format!(".tmp-graalvm-{}-{}", major, arch));
+    unzip_single_root(&zip_path, &dest_dir, &tmp, "GraalVM")?;
+    let _ = fs::remove_file(&zip_path);
+    let bin = dest_dir.join("bin").join("java.exe");
+    if bin.exists() {
+        Ok(bin)
+    } else {
+        Err("GraalVM descargado pero sin java.exe".to_string())
+    }
+}
+
+/// Descarga un runtime: kind = "temurin" | "graalvm" ("auto" => temurin).
+/// GraalVM solo existe para Java 17+; para 8 siempre usa Temurin.
+fn download_runtime(kind: &str, major: u32, arch: &str) -> Result<PathBuf, String> {
+    if kind == "graalvm" && major >= 17 {
+        match download_graalvm(major, arch) {
+            Ok(bin) => Ok(bin),
+            Err(e) => Err(format!("GraalVM falló ({}); probá con Temurin.", e)),
+        }
+    } else {
+        download_temurin_arch(major, arch)
+    }
+}
+
+/// Carpeta de staging de Mesa3D (software GL / llvmpipe) para Forzar CPU.
+fn mesa_dir_for(arch: &str) -> Result<PathBuf, String> {
+    Ok(data_root()?.join("runtimes").join(format!("mesa-{}", arch)))
+}
+
+/// Busca opengl32.dll dentro del staging de Mesa (hasta 3 niveles).
+fn mesa_opengl_dir() -> Option<PathBuf> {
+    let arch = host_arch();
+    let base = mesa_dir_for(arch).ok()?;
+    let mut stack = vec![(base, 0u8)];
+    while let Some((dir, depth)) = stack.pop() {
+        if dir.join("opengl32.dll").is_file() {
+            return Some(dir);
+        }
+        if depth < 3 {
+            if let Ok(entries) = fs::read_dir(&dir) {
+                for e in entries.flatten() {
+                    if e.path().is_dir() {
+                        stack.push((e.path(), depth + 1));
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Descarga Mesa3D (pal1000/mesa-dist-win) para render por software.
+/// Prefiere .zip; si solo hay .7z lo extrae con sevenz-rust.
+fn download_mesa(arch: &str) -> Result<PathBuf, String> {
+    let dest_dir = mesa_dir_for(arch)?;
+    if mesa_opengl_dir().is_some() {
+        return Ok(dest_dir);
+    }
+    let runtimes = data_root()?.join("runtimes");
+    ensure_dir(&runtimes)?;
+    let rel: GhRelease = github_json(
+        "https://api.github.com/repos/pal1000/mesa-dist-win/releases/latest",
+    )?;
+    let is_7z = |n: &str| n.ends_with(".7z");
+    let is_zip = |n: &str| n.ends_with(".zip");
+    let arch_tokens: &[&str] = match arch {
+        "x86" => &["x86", "i686", "win32"],
+        "aarch64" => &["aarch64", "arm64"],
+        _ => &[],
+    };
+    let matches_arch = |name: &str| -> bool {
+        let lower = name.to_lowercase();
+        if arch == "x64" {
+            // x64 no lleva token; evita el de x86
+            !lower.contains("x86") && !lower.contains("i686") && !lower.contains("arm64") && !lower.contains("aarch64")
+        } else {
+            arch_tokens.iter().any(|t| lower.contains(t))
+        }
+    };
+    let pick = rel
+        .assets
+        .iter()
+        .filter(|a| a.name.contains("msvc") && matches_arch(&a.name))
+        .find(|a| is_zip(&a.name))
+        .or_else(|| {
+            rel.assets
+                .iter()
+                .filter(|a| a.name.contains("msvc") && matches_arch(&a.name))
+                .find(|a| is_7z(&a.name))
+        })
+        .ok_or_else(|| "No se encontró build de Mesa para esta arquitectura.".to_string())?;
+    let tmp = runtimes.join(format!(".tmp-mesa-{}", arch));
+    if tmp.exists() {
+        let _ = fs::remove_dir_all(&tmp);
+    }
+    ensure_dir(&tmp)?;
+    if is_zip(&pick.name) {
+        let zip_path = runtimes.join(format!("mesa-{}-gl.zip", arch));
+        download_file(&pick.browser_download_url, &zip_path, None)?;
+        unzip_single_root(&zip_path, &dest_dir, &tmp, "Mesa")?;
+        let _ = fs::remove_file(&zip_path);
+    } else {
+        let sevenz_path = runtimes.join(format!("mesa-{}-gl.7z", arch));
+        download_file(&pick.browser_download_url, &sevenz_path, None)?;
+        sevenz_rust::decompress_file(&sevenz_path, &tmp)
+            .map_err(|e| format!("No se pudo descomprimir Mesa: {}", e))?;
+        // Normaliza: si hay una sola carpeta raíz, úsala como dest
+        let mut moved = false;
+        if let Ok(entries) = fs::read_dir(&tmp) {
+            let dirs: Vec<_> = entries.flatten().filter(|e| e.path().is_dir()).collect();
+            if dirs.len() == 1 {
+                if dest_dir.exists() {
+                    let _ = fs::remove_dir_all(&dest_dir);
+                }
+                fs::rename(dirs[0].path(), &dest_dir)
+                    .map_err(|e| format!("No se pudo instalar Mesa: {}", e))?;
+                moved = true;
+            }
+        }
+        if !moved {
+            if dest_dir.exists() {
+                let _ = fs::remove_dir_all(&dest_dir);
+            }
+            fs::rename(&tmp, &dest_dir)
+                .map_err(|e| format!("No se pudo instalar Mesa: {}", e))?;
+        }
+        let _ = fs::remove_dir_all(&tmp);
+        let _ = fs::remove_file(&sevenz_path);
+    }
+    if mesa_opengl_dir().is_none() {
+        return Err("Mesa descargado pero sin opengl32.dll.".to_string());
+    }
+    Ok(dest_dir)
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeInfo {
+    pub id: String,
+    pub kind: String,
+    pub major: u32,
+    pub arch: String,
+    pub path: String,
+    pub vendor: String,
+}
+
+/// Runtimes propios instalados en .minecraft/runtimes (temurin-*, graalvm-*).
+#[tauri::command]
+pub fn list_runtimes() -> Vec<RuntimeInfo> {
+    let mut out = Vec::new();
+    let Ok(root) = data_root() else {
+        return out;
+    };
+    let runtimes = root.join("runtimes");
+    let Ok(entries) = fs::read_dir(&runtimes) else {
+        return out;
+    };
+    for e in entries.flatten() {
+        let dir = e.path();
+        if !dir.is_dir() {
+            continue;
+        }
+        let name = e.file_name().to_string_lossy().to_string();
+        if name.starts_with('.') || name.starts_with("mesa-") {
+            continue;
+        }
+        // Formato kind-major-arch (arch opcional por compatibilidad vieja)
+        let mut parts = name.splitn(3, '-');
+        let (kind, major_s, arch) = match (parts.next(), parts.next(), parts.next()) {
+            (Some(k), Some(m), Some(a)) => (k.to_string(), m.to_string(), a.to_string()),
+            (Some(k), Some(m), None) => (k.to_string(), m.to_string(), host_arch().to_string()),
+            _ => continue,
+        };
+        if kind != "temurin" && kind != "graalvm" {
+            continue;
+        }
+        let bin = dir.join("bin").join("java.exe");
+        if !bin.is_file() {
+            continue;
+        }
+        let major = major_s.parse::<u32>().unwrap_or_else(|_| java_major_of(&bin).unwrap_or(0));
+        let vendor = if kind == "graalvm" {
+            "GraalVM Community".to_string()
+        } else {
+            "Eclipse Temurin".to_string()
+        };
+        out.push(RuntimeInfo {
+            id: name,
+            kind,
+            major,
+            arch,
+            path: bin.to_string_lossy().to_string(),
+            vendor,
+        });
+    }
+    out.sort_by(|a, b| (a.kind.clone(), a.major, a.arch.clone()).cmp(&(b.kind.clone(), b.major, b.arch.clone())));
+    out
+}
+
+/// Descarga un runtime a pedido: kind temurin|graalvm, major 8|17|21, arch x64|x86|aarch64.
+#[tauri::command]
+pub fn download_java_runtime(kind: String, major: u32, arch: String) -> Result<String, String> {
+    let arch = if arch == "auto" || arch.is_empty() {
+        host_arch().to_string()
+    } else {
+        arch
+    };
+    if !matches!(major, 8 | 11 | 16 | 17 | 21) {
+        return Err(format!("Versión de Java no soportada: {}", major));
+    }
+    download_runtime(&kind.to_lowercase(), major, &arch)
+        .map(|p| p.to_string_lossy().to_string())
+}
+
+/// Descarga/staging de Mesa3D para Forzar CPU (render por software).
+#[tauri::command]
+pub fn setup_mesa() -> Result<String, String> {
+    download_mesa(host_arch()).map(|p| p.to_string_lossy().to_string())
+}
+
+fn ensure_java(required_major: u32, preferred: &str, kind_pref: &str, arch_pref: &str) -> Result<PathBuf, String> {
     if !preferred.is_empty() {
         let p = PathBuf::from(preferred);
         if p.exists() {
@@ -2169,8 +2554,13 @@ fn ensure_java(required_major: u32, preferred: &str) -> Result<PathBuf, String> 
             }
         }
     }
-    // Descarga automática de Temurin como último recurso
-    match download_temurin(required_major) {
+    // Descarga automática como último recurso (Temurin por defecto, GraalVM si se pide y hay 17+)
+    let arch = if arch_pref == "auto" || arch_pref.is_empty() {
+        host_arch()
+    } else {
+        arch_pref
+    };
+    match download_runtime(kind_pref, required_major, arch) {
         Ok(bin) => Ok(bin),
         Err(e) => Err(format!(
             "No se encontró Java {} ni se pudo descargar automáticamente ({}). Instala Java {} (Temurin/Adoptium) y vuelve a intentarlo.",
@@ -2183,7 +2573,7 @@ fn ensure_java(required_major: u32, preferred: &str) -> Result<PathBuf, String> 
 // Construcción del comando de lanzamiento
 // ---------------------------------------------------------------------------
 
-fn offline_uuid(username: &str) -> String {
+pub(crate) fn offline_uuid(username: &str) -> String {
     // UUID v3 offline: MD5("OfflinePlayer:" + name) con bits de versión/variante
     let digest = md5::compute(format!("OfflinePlayer:{}", username));
     let mut b = digest.0;
@@ -2388,6 +2778,7 @@ struct LaunchPlan {
 fn build_launch_plan(
     config: &LaunchConfig,
     paths: &InstallPaths,
+    skin_port: Option<u16>,
 ) -> Result<LaunchPlan, String> {
     let root = data_root()?;
     let required_java = config.java_version.unwrap_or(0).max(
@@ -2398,7 +2789,12 @@ fn build_launch_plan(
             .map(|j| j.major_version)
             .unwrap_or_else(|| heuristic_min_java(&config.version)),
     );
-    let java_bin = ensure_java(required_java.max(8), &config.java_path)?;
+    let java_bin = ensure_java(
+        required_java.max(8),
+        &config.java_path,
+        config.java_runtime.as_deref().unwrap_or("auto"),
+        config.java_arch.as_deref().unwrap_or("auto"),
+    )?;
 
     let width = config.resolution.as_ref().map(|r| r.width).unwrap_or(config.width);
     let height = config.resolution.as_ref().map(|r| r.height).unwrap_or(config.height);
@@ -2490,11 +2886,40 @@ fn build_launch_plan(
     features.insert("is_quick_play_multiplayer".into(), false);
     features.insert("is_quick_play_realms".into(), false);
 
+    // --- Skins offline vía authlib-injector (solo si hay skin activa) ---
+    // Sin injector, authlib apunta a Mojang y la skin nunca se pide: el juego
+    // mostraría Steve/Alex aunque la skin esté guardada. El injector (binario
+    // oficial sin modificar) redirige authlib al OfflineSkinServer local.
+    let mut javaagent_arg: Option<String> = None;
+    let skin_active = crate::skin_manager::get_active_skin(&game_dir).is_some();
+    if skin_active {
+        if let Some(port) = skin_port.filter(|p| *p != 0) {
+            match crate::skin_server::ensure_injector(&game_dir) {
+                Ok(jar) => {
+                    javaagent_arg = Some(format!(
+                        "-javaagent:{}=http://localhost:{}",
+                        jar.display(),
+                        port
+                    ));
+                }
+                Err(e) => {
+                    eprintln!("[RagsMC] Injector no disponible ({}); se lanza sin skin aplicada.", e);
+                }
+            }
+        } else {
+            eprintln!("[RagsMC] OfflineSkinServer no disponible; se lanza sin skin aplicada.");
+        }
+    }
+
     // --- JVM args ---
     let mut jvm_args: Vec<String> = vec![
         format!("-Xmx{}M", config.memory.max(512)),
         format!("-Xms{}M", config.memory.max(512) / 4),
     ];
+    // El javaagent va primero: debe preceder a la clase principal.
+    if let Some(agent) = &javaagent_arg {
+        jvm_args.push(agent.clone());
+    }
     if let Some(vargs) = &paths.vjson.arguments {
         jvm_args.extend(process_arguments(&vargs.jvm, &features, &vars));
     } else {
@@ -2611,6 +3036,8 @@ fn build_launch_plan(
          [RagsMC] userType: {}\n\
          [RagsMC] accessToken: {}\n\
          [RagsMC] authlib_patched: {}\n\
+         [RagsMC] skin_activa: {}\n\
+         [RagsMC] javaagent: {}\n\
          [RagsMC] main_class: {}\n\
          [RagsMC] game_dir: {}\n\
          [RagsMC] classpath ({} JARs):\n          {}\n\
@@ -2627,6 +3054,8 @@ fn build_launch_plan(
         user_type,
         access_token,
         authlib_patched,
+        if skin_active { "sí" } else { "no" },
+        javaagent_arg.as_deref().unwrap_or("(ninguno)"),
         paths.main_class,
         game_dir.display(),
         paths.classpath_jars.len(),
@@ -2748,7 +3177,10 @@ fn background_launch(app: &AppHandle, config: &LaunchConfig) {
     }
     emit_launch(app, "installing", "Localizando Java...".to_string(), 0, 0);
     
-    let plan = match build_launch_plan(config, &paths) {
+    let skin_port = app
+        .try_state::<crate::skin_server::SkinServerState>()
+        .map(|s| s.port);
+    let plan = match build_launch_plan(config, &paths, skin_port) {
         Ok(p) => p,
         Err(e) => {
             emit_failure(app, e);
@@ -2780,12 +3212,50 @@ fn background_launch(app: &AppHandle, config: &LaunchConfig) {
         0,
     );
 
+    // Forzar CPU (Mesa llvmpipe): falla temprano si Mesa no está instalado.
+    let mesa_dir = if config.force_cpu.unwrap_or(false) {
+        match mesa_opengl_dir() {
+            Some(dir) => Some(dir),
+            None => {
+                emit_failure(
+                    app,
+                    "Forzar CPU activado pero Mesa no está instalado. Descargalo desde Ajustes > Java > Mesa.".to_string(),
+                );
+                return;
+            }
+        }
+    } else {
+        None
+    };
+
     let mut cmd = StdCommand::new(&java_bin);
     cmd.args(&plan.jvm_args)
         .arg(&plan.main_class)
         .args(&plan.game_args)
         .current_dir(&plan.game_dir)
         .env("APPDATA", std::env::var("APPDATA").unwrap_or_default());
+    // Forzar GPU dedicada (preferencia del SO; en Linux vía PRIME).
+    if config.force_gpu.unwrap_or(false) {
+        #[cfg(target_os = "windows")]
+        prefer_discrete_gpu(&java_bin);
+        #[cfg(not(target_os = "windows"))]
+        {
+            cmd.env("__NV_PRIME_RENDER_OFFLOAD", "1");
+            cmd.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia");
+        }
+    }
+    // Render por software con Mesa llvmpipe.
+    if let Some(dir) = mesa_dir {
+        let mut paths = vec![dir];
+        if let Some(current) = std::env::var_os("PATH") {
+            paths.extend(std::env::split_paths(&current));
+        }
+        if let Ok(joined) = std::env::join_paths(paths) {
+            cmd.env("PATH", joined);
+        }
+        cmd.env("LIBGL_ALWAYS_SOFTWARE", "1");
+        cmd.env("GALLIUM_DRIVER", "llvmpipe");
+    }
     // Toda la salida del juego va al log: sin esto los fallos son invisibles.
     match fs::OpenOptions::new().create(true).append(true).open(&log_path) {
         Ok(out) => match out.try_clone() {
@@ -2910,12 +3380,15 @@ fn read_log_tail(path: &Path, max_lines: usize, max_chars: usize) -> String {
 pub fn get_total_memory_gb() -> Result<u64, String> {
     #[cfg(target_os = "windows")]
     {
-        let out = StdCommand::new("powershell")
+        let mut ram_probe = StdCommand::new("powershell");
+        ram_probe
             .args([
                 "-NoProfile",
                 "-Command",
                 "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory",
-            ])
+            ]);
+        hide_console_window(&mut ram_probe);
+        let out = ram_probe
             .output()
             .map_err(|e| format!("No se pudo consultar la RAM: {}", e))?;
         let text = String::from_utf8_lossy(&out.stdout);
@@ -3006,23 +3479,29 @@ struct ModrinthVersion {
 }
 
 /// Busca mods en Modrinth compatibles con versión + loader.
+/// Query vacía = explorar catálogo (paginado con limit/offset).
 #[tauri::command]
 pub fn search_mods(
     query: String,
     mc_version: String,
     loader: String,
+    limit: Option<u32>,
+    offset: Option<u32>,
 ) -> Result<Vec<ModResult>, String> {
     let facets = format!(
         "[[\"project_type:mod\"],[\"versions:{}\"],[\"categories:{}\"]]",
         mc_version,
         loader.to_lowercase()
     );
+    let limit = limit.unwrap_or(20).clamp(1, 100).to_string();
+    let offset = offset.unwrap_or(0).to_string();
     let client = http_client()?;
     let resp: ModrinthSearch = client
         .get("https://api.modrinth.com/v2/search")
         .query(&[
             ("query", query.as_str()),
-            ("limit", "20"),
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str()),
             ("facets", facets.as_str()),
         ])
         .send()
@@ -3085,6 +3564,190 @@ pub fn install_mod(
     let dest = mods_dir.join(&file.filename);
     download_file(&file.url, &dest, None)?;
     Ok(file.filename.clone())
+}
+
+// ---- CurseForge: buscador e instalador (requiere API key del usuario) ----
+// La API de CurseForge exige header x-api-key (se obtiene gratis en
+// console.curseforge.com con aprobación). Sin key no se puede consultar.
+
+const CURSEFORGE_API: &str = "https://api.curseforge.com";
+/// gameId 432 = Minecraft.
+const CURSEFORGE_GAME_ID: u32 = 432;
+
+fn curseforge_loader_type(loader: &str) -> u32 {
+    match loader.to_lowercase().as_str() {
+        "forge" => 1,
+        "fabric" => 4,
+        "quilt" => 5,
+        "neoforge" => 6,
+        _ => 0, // Any
+    }
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct CfLogo {
+    #[serde(default)]
+    url: String,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct CfMod {
+    #[serde(default)]
+    id: u32,
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
+    slug: String,
+    #[serde(default)]
+    summary: String,
+    #[serde(default)]
+    download_count: u64,
+    #[serde(default)]
+    logo: Option<CfLogo>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct CfSearchResponse {
+    #[serde(default)]
+    data: Vec<CfMod>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct CfFile {
+    #[serde(default)]
+    file_name: String,
+    #[serde(default)]
+    download_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct CfFilesResponse {
+    #[serde(default)]
+    data: Vec<CfFile>,
+}
+
+fn cf_client(api_key: &str) -> Result<reqwest::blocking::Client, String> {
+    if api_key.trim().is_empty() {
+        return Err("Falta la API key de CurseForge. Conseguí una gratis en console.curseforge.com y guardala en el buscador.".to_string());
+    }
+    http_client()
+}
+
+/// Busca mods en CurseForge (paginado con page_size/index).
+#[tauri::command]
+pub fn search_curseforge_mods(
+    query: String,
+    mc_version: String,
+    loader: String,
+    api_key: String,
+    page_size: Option<u32>,
+    index: Option<u32>,
+) -> Result<Vec<ModResult>, String> {
+    let client = cf_client(&api_key)?;
+    let page_size = page_size.unwrap_or(20).clamp(1, 50).to_string();
+    let index = index.unwrap_or(0).to_string();
+    let resp = client
+        .get(format!("{}/v1/mods/search", CURSEFORGE_API))
+        .header("x-api-key", api_key.trim())
+        .query(&[
+            ("gameId", CURSEFORGE_GAME_ID.to_string()),
+            ("searchFilter", query.clone()),
+            ("gameVersion", mc_version.clone()),
+            ("modLoaderType", curseforge_loader_type(&loader).to_string()),
+            ("sortField", "2".to_string()),
+            ("sortOrder", "desc".to_string()),
+            ("pageSize", page_size),
+            ("index", index),
+        ])
+        .send()
+        .map_err(|e| format!("Error buscando en CurseForge: {}", e))?;
+    if resp.status().as_u16() == 403 {
+        return Err("CurseForge rechazó la API key (403). Revisá que sea válida y esté aprobada.".to_string());
+    }
+    if !resp.status().is_success() {
+        return Err(format!("CurseForge devolvió HTTP {}", resp.status()));
+    }
+    let parsed: CfSearchResponse = resp
+        .json()
+        .map_err(|e| format!("Respuesta inválida de CurseForge: {}", e))?;
+    Ok(parsed
+        .data
+        .into_iter()
+        .map(|m| ModResult {
+            id: m.id.to_string(),
+            slug: m.slug,
+            title: m.name,
+            description: m.summary,
+            icon_url: m.logo.map(|l| l.url).unwrap_or_default(),
+            downloads: m.download_count,
+        })
+        .collect())
+}
+
+/// Descarga el primer archivo compatible de un mod de CurseForge a mods/.
+#[tauri::command]
+pub fn install_curseforge_mod(
+    mod_id: String,
+    mc_version: String,
+    loader: String,
+    installation_id: String,
+    api_key: String,
+) -> Result<String, String> {
+    let mod_id: u32 = mod_id
+        .trim()
+        .parse()
+        .map_err(|_| "ID de mod de CurseForge inválido.".to_string())?;
+    let list = load_installations()?;
+    let inst = list
+        .iter()
+        .find(|i| i.id == installation_id)
+        .ok_or_else(|| "Instalación no encontrada".to_string())?;
+    let game_dir = game_dir_of(inst)?;
+    let mods_dir = game_dir.join("mods");
+    ensure_dir(&mods_dir)?;
+    let client = cf_client(&api_key)?;
+    let resp = client
+        .get(format!("{}/v1/mods/{}/files", CURSEFORGE_API, mod_id))
+        .header("x-api-key", api_key.trim())
+        .query(&[
+            ("gameVersion", mc_version.as_str()),
+            ("modLoaderType", curseforge_loader_type(&loader).to_string().as_str()),
+            ("pageSize", "5"),
+        ])
+        .send()
+        .map_err(|e| format!("Error consultando archivos en CurseForge: {}", e))?;
+    if resp.status().as_u16() == 403 {
+        return Err("CurseForge rechazó la API key (403). Revisá que sea válida y esté aprobada.".to_string());
+    }
+    if !resp.status().is_success() {
+        return Err(format!("CurseForge devolvió HTTP {}", resp.status()));
+    }
+    let parsed: CfFilesResponse = resp
+        .json()
+        .map_err(|e| format!("Respuesta inválida de CurseForge: {}", e))?;
+    let file = parsed
+        .data
+        .iter()
+        .find(|f| f.download_url.as_deref().map(|u| !u.is_empty()).unwrap_or(false))
+        .ok_or_else(|| "El mod no tiene archivos descargables para esa versión/loader (o el autor bloqueó descargas por API).".to_string())?;
+    let url = file.download_url.clone().unwrap_or_default();
+    let dest = mods_dir.join(&file.file_name);
+    download_file(&url, &dest, None)?;
+    Ok(file.file_name.clone())
+}
+
+/// Chequeo real de conectividad (200/204 de generate_204). Ok(false) = sin internet.
+#[tauri::command]
+pub fn check_connectivity() -> Result<bool, String> {
+    let client = reqwest::blocking::Client::builder()
+        .user_agent(USER_AGENT)
+        .timeout(Duration::from_secs(4))
+        .build()
+        .map_err(|e| format!("Error HTTP: {}", e))?;
+    match client.get("https://www.google.com/generate_204").send() {
+        Ok(resp) => Ok(resp.status().is_success()),
+        Err(_) => Ok(false),
+    }
 }
 
 // ---- Respaldos de mundos (zip de saves/) ----
@@ -3374,6 +4037,95 @@ fn read_mod_metadata(jar_path: &Path) -> (String, String, String, Vec<String>) {
     (String::new(), String::new(), String::new(), Vec::new())
 }
 
+/// Extensiones aceptadas por subcarpeta (minúsculas, sin punto).
+fn content_extensions(subfolder: &str) -> Vec<&'static str> {
+    match subfolder {
+        "mods" => vec!["jar"],
+        "shaderpacks" | "resourcepacks" => vec!["zip"],
+        _ => vec!["jar", "zip"],
+    }
+}
+
+/// Tamaño de archivo o, para directorios (packs descomprimidos), suma recursiva.
+fn path_size_recursive(path: &Path) -> u64 {
+    if path.is_file() {
+        return path.metadata().map(|m| m.len()).unwrap_or(0);
+    }
+    let mut total = 0u64;
+    if let Ok(entries) = fs::read_dir(path) {
+        for e in entries.flatten() {
+            total = total.saturating_add(path_size_recursive(&e.path()));
+        }
+    }
+    total
+}
+
+/// Lee pack.mcmeta (de un .zip o de una carpeta) y devuelve la descripción.
+/// Soporta description como string o como objeto {"text": "..."}.
+fn read_pack_description(path: &Path) -> String {
+    let read_mcmeta = |content: &str| -> Option<String> {
+        let json: serde_json::Value = serde_json::from_str(content).ok()?;
+        let desc = json.get("pack")?.get("description")?;
+        if let Some(s) = desc.as_str() {
+            let s = s.trim();
+            return if s.is_empty() { None } else { Some(s.to_string()) };
+        }
+        desc.get("text")?.as_str().map(|s| s.to_string())
+    };
+    if path.is_dir() {
+        if let Ok(content) = fs::read_to_string(path.join("pack.mcmeta")) {
+            if let Some(d) = read_mcmeta(&content) {
+                return d;
+            }
+        }
+        return String::new();
+    }
+    let Ok(file) = fs::File::open(path) else {
+        return String::new();
+    };
+    let Ok(mut archive) = zip::ZipArchive::new(file) else {
+        return String::new();
+    };
+    let Ok(entry) = archive.by_name("pack.mcmeta") else {
+        return String::new();
+    };
+    if entry.size() > 65536 {
+        return String::new();
+    }
+    let mut content = String::new();
+    // `entry` se mueve al leer; se usa un bloque para soltar el borrow.
+    let mut entry = entry;
+    if std::io::Read::read_to_string(&mut entry, &mut content).is_err() {
+        return String::new();
+    }
+    read_mcmeta(&content).unwrap_or_default()
+}
+
+/// Decide si una entrada va al listado: devuelve (nombre visible, deshabilitado, aceptar).
+/// - Ocultos (punto inicial) siempre se ignoran.
+/// - Sufijo .disabled => deshabilitado (se lista igual).
+/// - mods/shaderpacks: solo archivos con extensión válida.
+/// - resourcepacks: .zip y carpetas descomprimidas.
+fn accept_content_entry(subfolder: &str, fname: &str, is_dir: bool) -> (String, bool, bool) {
+    if fname.starts_with('.') {
+        return (String::new(), false, false);
+    }
+    let (base_name, is_disabled) = match fname.strip_suffix(".disabled") {
+        Some(b) => (b.to_string(), true),
+        None => (fname.to_string(), false),
+    };
+    let lower = base_name.to_lowercase();
+    let ext_ok = content_extensions(subfolder)
+        .iter()
+        .any(|e| lower.ends_with(&format!(".{}", e)));
+    let accept = if subfolder == "resourcepacks" {
+        (!is_dir && ext_ok) || is_dir
+    } else {
+        !is_dir && ext_ok
+    };
+    (base_name, is_disabled, accept)
+}
+
 fn list_content_folder(subfolder: &str, installation_id: Option<String>) -> Result<Vec<ContentItem>, String> {
     let dir = content_dir(subfolder, installation_id)?;
     if !dir.exists() {
@@ -3383,26 +4135,36 @@ fn list_content_folder(subfolder: &str, installation_id: Option<String>) -> Resu
     for entry in fs::read_dir(&dir).map_err(|e| format!("Error leyendo {}: {}", dir.display(), e))?.flatten() {
         let path = entry.path();
         let fname = path.file_name().unwrap_or_default().to_string_lossy().to_string();
-        let is_disabled = fname.ends_with(".disabled");
-        let display_name = if is_disabled {
-            fname.trim_end_matches(".disabled").to_string()
-        } else {
-            fname.clone()
-        };
-        let size = path.metadata().map(|m| m.len()).unwrap_or(0);
-        if path.is_file() && (fname.ends_with(".jar") || fname.ends_with(".disabled")) {
-            let (mod_name, mod_version, mod_desc, mc_versions) = if subfolder == "mods" {
-                read_mod_metadata(&path)
-            } else {
-                (String::new(), String::new(), String::new(), Vec::new())
-            };
-            let name = if !mod_name.is_empty() { mod_name } else { display_name };
+        let (base_name, is_disabled, accept) = accept_content_entry(subfolder, &fname, path.is_dir());
+        if !accept {
+            continue;
+        }
+        let size = path_size_recursive(&path);
+        if subfolder == "mods" {
+            let (mod_name, mod_version, mod_desc, mc_versions) = read_mod_metadata(&path);
+            let name = if !mod_name.is_empty() { mod_name } else { base_name.clone() };
             items.push(ContentItem {
                 filename: fname,
                 name,
                 version: mod_version,
                 description: mod_desc,
                 mc_versions,
+                size,
+                enabled: !is_disabled,
+                path: path.to_string_lossy().to_string(),
+            });
+        } else {
+            let desc = if subfolder == "resourcepacks" {
+                read_pack_description(&path)
+            } else {
+                String::new()
+            };
+            items.push(ContentItem {
+                filename: fname,
+                name: base_name,
+                version: String::new(),
+                description: desc,
+                mc_versions: Vec::new(),
                 size,
                 enabled: !is_disabled,
                 path: path.to_string_lossy().to_string(),
@@ -3489,6 +4251,23 @@ pub fn open_game_folder(subfolder: Option<String>, installation_id: Option<Strin
         game_dir_of(inst)?
     } else {
         data_root()?
+    };
+    ensure_dir(&dir)?;
+    #[cfg(target_os = "windows")]
+    { let _ = StdCommand::new("explorer").arg(dir.to_string_lossy().to_string()).spawn(); }
+    #[cfg(target_os = "macos")]
+    { let _ = StdCommand::new("open").arg(dir.to_string_lossy().to_string()).spawn(); }
+    #[cfg(target_os = "linux")]
+    { let _ = StdCommand::new("xdg-open").arg(dir.to_string_lossy().to_string()).spawn(); }
+    Ok(dir.to_string_lossy().to_string())
+}
+
+/// Abre en el explorador la carpeta de respaldos (.minecraft/backups[/<id>]).
+#[tauri::command]
+pub fn open_backups_folder(installation_id: Option<String>) -> Result<String, String> {
+    let dir = match installation_id {
+        Some(ref iid) if !iid.is_empty() => backups_dir_of(iid)?,
+        _ => data_root()?.join("backups"),
     };
     ensure_dir(&dir)?;
     #[cfg(target_os = "windows")]
@@ -3637,10 +4416,10 @@ pub fn detect_java_versions() -> Vec<JavaInfo> {
             continue;
         }
         if let Some(major) = java_major_of(&bin) {
-            let out = StdCommand::new(&bin)
-                .arg("-version")
-                .output()
-                .ok();
+            let mut probe = StdCommand::new(&bin);
+            probe.arg("-version");
+            hide_console_window(&mut probe);
+            let out = probe.output().ok();
             let full_version = out.as_ref().map(|o| {
                 let text = format!(
                     "{}{}",
@@ -3851,6 +4630,59 @@ fn compare_versions(a: &str, b: &str) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn content_acepta_zip_y_carpetas_segun_subcarpeta() {
+        // mods: solo .jar
+        assert!(accept_content_entry("mods", "sodium.jar", false).2);
+        assert!(!accept_content_entry("mods", "pack.zip", false).2);
+        assert!(!accept_content_entry("mods", "Carpeta", true).2);
+        // shaderpacks: .zip sí, .jar no
+        assert!(accept_content_entry("shaderpacks", "BSL.zip", false).2);
+        assert!(accept_content_entry("shaderpacks", "BSL.ZIP", false).2);
+        assert!(!accept_content_entry("shaderpacks", "mod.jar", false).2);
+        // resourcepacks: .zip y carpetas
+        assert!(accept_content_entry("resourcepacks", "Faithful.zip", false).2);
+        assert!(accept_content_entry("resourcepacks", "MiPack", true).2);
+        assert!(!accept_content_entry("resourcepacks", "mod.jar", false).2);
+        // .disabled se lista como deshabilitado
+        let (base, disabled, accept) =
+            accept_content_entry("shaderpacks", "BSL.zip.disabled", false);
+        assert!(accept && disabled && base == "BSL.zip");
+        // ocultos se ignoran
+        assert!(!accept_content_entry("mods", ".DS_Store", false).2);
+    }
+
+    #[test]
+    fn pack_description_desde_zip_y_carpeta() {
+        let dir = tempfile::tempdir().unwrap();
+        // zip con pack.mcmeta string
+        let zip_path = dir.path().join("pack.zip");
+        {
+            let file = fs::File::create(&zip_path).unwrap();
+            let mut zip = zip::ZipWriter::new(file);
+            zip.start_file("pack.mcmeta", zip::write::SimpleFileOptions::default())
+                .unwrap();
+            zip.write_all(br#"{"pack":{"pack_format":15,"description":"Mi pack"}}"#)
+                .unwrap();
+            zip.finish().unwrap();
+        }
+        assert_eq!(read_pack_description(&zip_path), "Mi pack");
+        // carpeta con description objeto
+        let folder = dir.path().join("MiPack");
+        fs::create_dir_all(&folder).unwrap();
+        fs::write(
+            folder.join("pack.mcmeta"),
+            r#"{"pack":{"pack_format":15,"description":{"text":"Hola"}}}"#,
+        )
+        .unwrap();
+        assert_eq!(read_pack_description(&folder), "Hola");
+        // sin mcmeta -> vacío
+        let empty = dir.path().join("Vacio");
+        fs::create_dir_all(&empty).unwrap();
+        assert_eq!(read_pack_description(&empty), "");
+    }
 
     #[test]
     fn offline_uuid_is_stable_and_v3() {
@@ -4234,12 +5066,61 @@ mod tests {
         let token = load_or_create_client_token(dir.path()).unwrap();
         
         // UUID v4: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-        // versión = 4 (bit 12 = 0100)
+        // versiA3n = 4 (bit 12 = 0100)
         // variante = 10xx (bit 16 = 10xx)
         assert_eq!(token.len(), 36);
-        assert_eq!(&token[14..15], "4"); // versión 4
+        assert_eq!(&token[14..15], "4"); // versiA3n 4
         let variant_byte = &token[19..20];
         assert!(matches!(variant_byte, "8" | "9" | "a" | "b")); // variante RFC4122
     }
+
+    #[test]
+    fn adoptium_url_por_version_y_arch() {
+        assert_eq!(
+            adoptium_jre_url(21, "x64"),
+            "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse"
+        );
+        assert_eq!(
+            adoptium_jre_url(8, "x86"),
+            "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jre/hotspot/normal/eclipse"
+        );
+        assert!(adoptium_jre_url(17, "aarch64").contains("/aarch64/"));
+    }
+
+    #[test]
+    fn graalvm_asset_solo_17_plus_y_sin_x86() {
+        assert_eq!(
+            graalvm_asset_name(21, "x64"),
+            Some("graalvm-community-jdk-21_windows-x64_bin.zip".to_string())
+        );
+        assert_eq!(
+            graalvm_asset_name(17, "aarch64"),
+            Some("graalvm-community-jdk-17_windows-aarch64_bin.zip".to_string())
+        );
+        assert_eq!(graalvm_asset_name(8, "x64"), None);
+        assert_eq!(graalvm_asset_name(21, "x86"), None);
+        assert_eq!(graalvm_asset_name(16, "x64"), None);
+    }
+
+    #[test]
+    fn host_arch_no_vacio() {
+        assert!(!host_arch().is_empty());
+    }
+
+    #[test]
+    fn gpu_preference_es_alto_rendimiento() {
+        assert_eq!(gpu_preference_value(), "GpuPreference=2;");
+    }
+
+    #[test]
+    fn curseforge_loader_mapping() {
+        assert_eq!(curseforge_loader_type("forge"), 1);
+        assert_eq!(curseforge_loader_type("fabric"), 4);
+        assert_eq!(curseforge_loader_type("quilt"), 5);
+        assert_eq!(curseforge_loader_type("neoforge"), 6);
+        assert_eq!(curseforge_loader_type("vanilla"), 0);
+        assert_eq!(curseforge_loader_type("raro"), 0);
+    }
 }
+
 

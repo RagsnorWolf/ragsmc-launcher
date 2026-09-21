@@ -3,6 +3,7 @@ import { Play, Plus, RefreshCw, Search, Settings2, Trash2, Package, FolderOpen, 
 import type { Installation, LoaderType, MinecraftVersion } from "../types";
 import { LOADER_INFO, DEFAULT_JVM_ARGS } from "../types";
 import { formatPlayTime } from "../lib/utils";
+import MemoryPicker from "../components/MemoryPicker";
 
 interface InstallationsViewProps {
   installations: Installation[];
@@ -216,24 +217,7 @@ export default function InstallationsView({
                   <option value="bukkit">Bukkit</option>
                 </select>
               </div>
-              <div>
-                <label className="text-xs text-zinc-400 block mb-1.5">
-                  Memoria: {(memory / 1024).toFixed(1)} GB
-                </label>
-                <input
-                  type="range"
-                  min={1024}
-                  max={16384}
-                  step={512}
-                  value={memory}
-                  onChange={(e) => setMemory(Number(e.target.value))}
-                  className="w-full mt-2"
-                />
-                <div className="flex justify-between text-[10px] text-zinc-600 mt-0.5">
-                  <span>1 GB</span>
-                  <span>16 GB</span>
-                </div>
-              </div>
+              <MemoryPicker valueMb={memory} onChange={setMemory} />
             </div>
 
             <button
@@ -306,8 +290,12 @@ export default function InstallationsView({
                   key={inst.id}
                   className="rounded-xl border border-white/10 bg-[#141414] p-4 flex items-center gap-4 hover:border-white/15 transition-all group"
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${loaderInfo?.bgColor || "bg-zinc-800"}`}>
-                    {loaderInfo?.icon || "⬛"}
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 overflow-hidden ${loaderInfo?.bgColor || "bg-zinc-800"}`}>
+                    {loaderInfo?.logo ? (
+                      <img src={loaderInfo.logo} alt={loaderInfo.name} className="w-10 h-10 object-cover" />
+                    ) : (
+                      loaderInfo?.icon || "⬛"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-zinc-100 truncate">{inst.name}</p>

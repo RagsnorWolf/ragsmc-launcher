@@ -19,14 +19,14 @@ export default function NewsPanel({ entries, onSeeAll }: NewsPanelProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <div className="rounded-2xl border border-white/15 bg-black/70 backdrop-blur-xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Newspaper className="w-4 h-4 text-green-400" />
             <span className="text-sm font-semibold text-zinc-100">Noticias Destacadas</span>
           </div>
         </div>
-        <p className="text-zinc-500 text-sm">No hay noticias disponibles</p>
+        <p className="text-zinc-400 text-sm">No hay noticias disponibles</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default function NewsPanel({ entries, onSeeAll }: NewsPanelProps) {
   const currentEntry = entries[currentIndex];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 h-full flex flex-col">
+    <div className="rounded-2xl border border-white/15 bg-black/70 backdrop-blur-xl p-6 h-full flex flex-col shadow-2xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Newspaper className="w-4 h-4 text-green-400" />
@@ -60,9 +60,9 @@ export default function NewsPanel({ entries, onSeeAll }: NewsPanelProps) {
                 {currentEntry.badge}
               </span>
             )}
-            <h4 className="text-lg font-bold text-zinc-100 mb-1 truncate">{currentEntry.title}</h4>
-            <p className="text-sm opacity-70 line-clamp-2">{currentEntry.description}</p>
-            <span className="text-xs opacity-50 mt-2">{currentEntry.date}</span>
+            <h4 className="text-lg font-bold text-white mb-1">{currentEntry.title}</h4>
+            <p className="text-sm text-zinc-300 line-clamp-3">{currentEntry.description}</p>
+            <span className="text-xs text-zinc-400 mt-2">{currentEntry.date}</span>
           </div>
         </div>
 

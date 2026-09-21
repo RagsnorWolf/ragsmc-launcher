@@ -1,14 +1,12 @@
-import { User, Package, Sun, Puzzle, ChevronRight } from "lucide-react";
+import { User, Folder, ChevronRight } from "lucide-react";
 
 interface CustomizePanelProps {
   onNavigate: (view: string) => void;
 }
 
 const customizeItems = [
-  { id: "account", icon: User, title: "Skins", desc: "Cambia tu apariencia", view: "account" },
-  { id: "resources", icon: Package, title: "Recursos", desc: "Paquetes de texturas", view: "installations" },
-  { id: "shaders", icon: Sun, title: "Shaders", desc: "Iluminación épica", view: "mods" },
-  { id: "mods", icon: Puzzle, title: "Mods", desc: "Amplía tu aventura", view: "mods" },
+  { id: "skins", icon: User, title: "Skins", desc: "Cambia tu apariencia", view: "skins" },
+  { id: "resources", icon: Folder, title: "Recursos", desc: "Mods, shaders y texturas", view: "mods" },
 ];
 
 export default function CustomizePanel({ onNavigate }: CustomizePanelProps) {

@@ -11,7 +11,7 @@ export interface ServiceStatusItem {
 
 export type EditionType = "java" | "bedrock";
 
-export type ViewType = "play" | "installations" | "settings" | "account" | "mods" | "console" | "resources" | "shaders";
+export type ViewType = "play" | "installations" | "settings" | "account" | "mods" | "console" | "skins";
 
 export interface MinecraftVersion {
   id: string;
@@ -60,6 +60,10 @@ export interface LaunchConfig {
   loaderVersion?: string;
   javaPath: string;
   javaVersion?: number;
+  javaRuntime?: string;
+  javaArch?: string;
+  forceGpu?: boolean;
+  forceCpu?: boolean;
   memory: number;
   width: number;
   height: number;
@@ -372,12 +376,12 @@ export interface Notification {
   persistent?: boolean;
 }
 
-export const LOADER_INFO: Record<LoaderType, { name: string; color: string; bgColor: string; borderColor: string; icon: string; description: string }> = {
-  vanilla: { name: "Vanilla", color: "text-emerald-400", bgColor: "bg-emerald-500/20", borderColor: "border-emerald-500/30", icon: "⬛", description: "Minecraft sin modificaciones" },
-  fabric: { name: "Fabric", color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30", icon: "🎭", description: "Modloader ligero y moderno" },
-  forge: { name: "Forge", color: "text-orange-400", bgColor: "bg-orange-500/20", borderColor: "border-orange-500/30", icon: "⚙️", description: "Modloader clásico y completo" },
-  neoforge: { name: "NeoForge", color: "text-cyan-400", bgColor: "bg-cyan-500/20", borderColor: "border-cyan-500/30", icon: "🔮", description: "Fork moderno de Forge" },
-  quilt: { name: "Quilt", color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500/30", icon: "🧵", description: "Fork de Fabric enfocado en comunidad" },
+export const LOADER_INFO: Record<LoaderType, { name: string; color: string; bgColor: string; borderColor: string; icon: string; logo?: string; description: string }> = {
+  vanilla: { name: "Vanilla", color: "text-emerald-400", bgColor: "bg-emerald-500/20", borderColor: "border-emerald-500/30", icon: "⬛", logo: "/grass-cube.png", description: "Minecraft sin modificaciones" },
+  fabric: { name: "Fabric", color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30", icon: "🎭", logo: "/loaders/fabric.png", description: "Modloader ligero y moderno" },
+  forge: { name: "Forge", color: "text-orange-400", bgColor: "bg-orange-500/20", borderColor: "border-orange-500/30", icon: "⚙️", logo: "/loaders/forge.png", description: "Modloader clásico y completo" },
+  neoforge: { name: "NeoForge", color: "text-cyan-400", bgColor: "bg-cyan-500/20", borderColor: "border-cyan-500/30", icon: "🔮", logo: "/loaders/neoforge.png", description: "Fork moderno de Forge" },
+  quilt: { name: "Quilt", color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500/30", icon: "🧵", logo: "/loaders/quilt.png", description: "Fork de Fabric enfocado en comunidad" },
   paper: { name: "Paper", color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500/30", icon: "📄", description: "Servidor optimizado de alto rendimiento" },
   purpur: { name: "Purpur", color: "text-rose-400", bgColor: "bg-rose-500/20", borderColor: "border-rose-500/30", icon: "💜", description: "Fork optimizado de Paper" },
   spigot: { name: "Spigot", color: "text-amber-400", bgColor: "bg-amber-500/20", borderColor: "border-amber-500/30", icon: "🟤", description: "Servidor clásico optimizado" },
@@ -497,6 +501,21 @@ export interface UpdateInfo {
 
 export type Edition = "java" | "bedrock";
 
+export type SkinModel = "classic" | "slim";
+
+export interface SkinEntry {
+  uuid: string;
+  name: string;
+  model: SkinModel;
+  file: string;
+  created_at: number;
+}
+
+export interface SkinConfig {
+  active_skin: string | null;
+  skins: SkinEntry[];
+}
+
 export interface NewsEntry {
   id: string;
   title: string;
@@ -512,6 +531,7 @@ export interface ModEntry {
   name: string;
   description: string;
   icon: string;
+  iconUrl?: string;
   installed: boolean;
   slug: string;
   category: "utility" | "content" | "performance" | "visual" | "api";

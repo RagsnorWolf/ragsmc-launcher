@@ -16,6 +16,14 @@ export const SOCIAL_COLORS = {
 
 export type SocialNetwork = keyof typeof SOCIAL_LINKS;
 
+/// PNGs oficiales de `public/social/` (null = icono SVG dibujado).
+export const SOCIAL_ICON_IMG: Record<SocialNetwork, string | null> = {
+  twitch: "/social/twitch.png",
+  youtube: null,
+  tiktok: "/social/tiktok.png",
+  whatsapp: "/social/whatsapp.png",
+};
+
 export const openSocial = async (network: SocialNetwork) => {
   await openUrl(SOCIAL_LINKS[network]);
 };

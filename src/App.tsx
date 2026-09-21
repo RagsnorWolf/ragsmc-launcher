@@ -11,6 +11,7 @@ import SettingsView, { type LauncherSettings } from "./views/SettingsView";
 import AccountView from "./views/AccountView";
 import ModsManagerView from "./views/ModsManagerView";
 import ConsoleView from "./views/ConsoleView";
+import SkinsView from "./views/SkinsView";
 import RightPanel from "./components/RightPanel";
 import FooterBar from "./components/FooterBar";
 import { toast } from "./components/Toasts";
@@ -54,12 +55,15 @@ function loadUsername(): string {
 function loadSettings(): LauncherSettings {
   const defaults: LauncherSettings = {
     javaPath: "",
+    javaRuntimeKind: "auto",
+    javaArch: "auto",
     memory: 4096,
     width: 1280,
     height: 720,
     fullscreen: false,
     discordRichPresence: false,
     dedicatedGpu: false,
+    forceCpu: false,
     dnsOverride: "",
   };
   try {
@@ -98,9 +102,38 @@ export default function App({ onReady }: AppProps) {
   const [launch, setLaunch] = useState<LaunchStatus>({ open: false, phase: "working", message: "", logs: [] });
   const [accounts, setAccounts] = useState<AccountEntry[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [online, setOnline] = useState(true);
+
+  // Señal de internet real (backend) + eventos del SO, cada 20s
+  useEffect(() => {
+    let alive = true;
+    const check = async () => {
+      try {
+        const ok = await invoke<boolean>("check_connectivity");
+        if (alive) setOnline(ok);
+      } catch {
+        if (alive) setOnline(navigator.onLine);
+      }
+    };
+    check();
+    const id = setInterval(check, 20000);
+    const onUp = () => check();
+    const onDown = () => {
+      if (alive) setOnline(false);
+    };
+    window.addEventListener("online", onUp);
+    window.addEventListener("offline", onDown);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      window.removeEventListener("online", onUp);
+      window.removeEventListener("offline", onDown);
+    };
+  }, []);
 
   const windowWidth = useWindowSize();
   const isCompact = windowWidth < 1200;
+  const [playNav, setPlayNav] = useState<{ anchor: "top" | "game"; n: number }>({ anchor: "top", n: 0 });
 
   const applyVersions = (list: MinecraftVersion[]) => {
     if (list.length > 0) {
@@ -286,6 +319,10 @@ export default function App({ onReady }: AppProps) {
         loaderVersion: inst.loaderVersion,
         javaPath: inst.javaPath || settings.javaPath,
         javaVersion: inst.javaVersion,
+        javaRuntime: settings.javaRuntimeKind || undefined,
+        javaArch: settings.javaArch || undefined,
+        forceGpu: settings.dedicatedGpu || undefined,
+        forceCpu: settings.forceCpu || undefined,
         memory: inst.memory,
         width: inst.resolution.width,
         height: inst.resolution.height,
@@ -361,12 +398,17 @@ export default function App({ onReady }: AppProps) {
     <div className="flex flex-col h-screen w-screen bg-[#0a0e0d] text-zinc-100 overflow-hidden">
       <Titlebar />
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar 
-          view={view} 
-          onChange={setView} 
+        <Sidebar
+          view={view}
+          onChange={setView}
           username={username}
           onOpenGameFolder={openGameFolder}
           collapsed={isCompact}
+          playAnchor={playNav.anchor}
+          onPlayNav={(anchor) => {
+            setView("play");
+            setPlayNav((p) => ({ anchor, n: p.n + 1 }));
+          }}
         />
         <main className="flex-1 overflow-y-auto">
           {view === "play" && (
@@ -377,6 +419,7 @@ export default function App({ onReady }: AppProps) {
               onPlay={handlePlay}
               launching={launch.open && launch.phase === "working"}
               onCreateNew={() => setView("installations")}
+              navSignal={playNav}
             />
           )}
           {view === "installations" && (
@@ -402,29 +445,19 @@ export default function App({ onReady }: AppProps) {
           {view === "console" && (
             <ConsoleView installations={installations} selectedInstallationId={selectedInstallationId} />
           )}
-          {view === "resources" && (
-            <InstallationsView
-              installations={installations}
-              versions={versions}
-              versionsLoading={versionsLoading}
-              onPlay={handlePlayInstallation}
-              onDelete={handleDeleteInstallation}
-              onCreate={handleCreateInstallation}
-              onRefreshVersions={refreshVersions}
-            />
-          )}
-          {view === "shaders" && (
-            <ModsManagerView installations={installations} selectedInstallationId={selectedInstallationId} />
+          {view === "skins" && (
+            <SkinsView username={username} gameDir="" />
           )}
         </main>
-        <RightPanel 
+        <RightPanel
           collapsed={isCompact}
           installations={installations}
           selectedInstallationId={selectedInstallationId}
           onOpenGameFolder={openGameFolder}
+          onNavigate={(v) => setView(v as ViewType)}
         />
       </div>
-      <FooterBar status="connected" version="2.0.0" />
+      <FooterBar status={online ? "connected" : "offline"} version="1.0.4" />
       {versionsError && view === "play" && (
         <div className="px-4 py-2 bg-yellow-500/10 border-t border-yellow-500/20 text-xs text-yellow-200/80 text-center">
           Sin conexión a Mojang: mostrando versiones de respaldo. Revisa tu internet.

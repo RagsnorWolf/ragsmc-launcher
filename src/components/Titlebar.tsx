@@ -30,11 +30,7 @@ export default function Titlebar() {
     >
       {/* Logo/Title on the left */}
       <div className="flex items-center gap-2" data-tauri-drag-region>
-        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center">
-          <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
+        <img src="/grass-cube.png" alt="RagsMC" className="w-5 h-5 rounded-md object-cover" />
         <span className="text-sm font-semibold tracking-wide text-zinc-100">RagsMC</span>
         <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-500 opacity-70">LAUNCHER</span>
       </div>

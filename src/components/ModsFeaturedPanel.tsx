@@ -9,7 +9,7 @@ interface ModsFeaturedPanelProps {
 
 export default function ModsFeaturedPanel({ mods, onSeeAll, onInstall }: ModsFeaturedPanelProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 h-full flex flex-col">
+    <div className="rounded-2xl border border-white/15 bg-black/70 backdrop-blur-xl p-6 h-full flex flex-col shadow-2xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-green-400" />
@@ -24,11 +24,13 @@ export default function ModsFeaturedPanel({ mods, onSeeAll, onInstall }: ModsFea
         {mods.map((mod) => (
           <div
             key={mod.id}
-            className="flex items-center gap-3 p-3 rounded-lg bg-black/30 border border-white/5 hover:bg-white/5 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg bg-black/50 border border-white/10 hover:bg-white/5 transition-colors"
           >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: mod.installed ? "#00ff8820" : "transparent" }}>
-              {mod.icon ? (
-                <img src={mod.icon} alt={mod.name} className="w-8 h-8 object-contain" />
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white/5" style={{ background: mod.installed ? "#00ff8820" : undefined }}>
+              {mod.iconUrl ? (
+                <img src={mod.iconUrl} alt={mod.name} loading="lazy" className="w-10 h-10 object-cover" />
+              ) : mod.icon ? (
+                <span className="text-2xl leading-none">{mod.icon}</span>
               ) : (
                 <Package className="w-5 h-5 text-zinc-500" />
               )}
@@ -42,7 +44,7 @@ export default function ModsFeaturedPanel({ mods, onSeeAll, onInstall }: ModsFea
                   </span>
                 )}
               </div>
-              <p className="text-xs opacity-70 truncate">{mod.description}</p>
+              <p className="text-xs text-zinc-300 truncate">{mod.description}</p>
             </div>
             <button
               onClick={() => mod.installed ? onInstall(mod.id) : onInstall(mod.id)}

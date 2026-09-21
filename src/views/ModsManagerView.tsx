@@ -41,6 +41,7 @@ export default function ModsManagerView({ installations, selectedInstallationId 
   }, [selectedInstallationId]);
 
   const loadItems = useCallback(async () => {
+    if (tab === "search") return;
     setLoading(true);
     try {
       const cmd = tab === "mods" ? "list_mods" : tab === "shaders" ? "list_shaders" : "list_resource_packs";
@@ -122,7 +123,7 @@ export default function ModsManagerView({ installations, selectedInstallationId 
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-zinc-100">Gestor de Contenido</h1>
+            <h1 className="text-xl font-bold text-zinc-100">Recursos</h1>
             <p className="text-sm text-zinc-500 mt-1">
               {enabledCount}/{items.length} activos · {formatBytes(totalSize)}
             </p>

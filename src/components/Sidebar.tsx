@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from "react";
-import { 
-  Home, Play, Package, Puzzle, Settings, User, 
-  ChevronLeft, ChevronRight, Tv, Video, 
-  MessageSquare, Sparkles, FolderOpen, ExternalLink, X, Terminal, 
-  Sun, Folder, UserCircle 
+import {
+  Home, Play, Package, Settings, User,
+  ChevronLeft, ChevronRight, Tv, Video,
+  MessageSquare, Sparkles, FolderOpen, ExternalLink, X, Terminal,
+  Folder, UserCircle, Palette
 } from "lucide-react";
 import type { ViewType } from "../types";
-import WolfLogo from "./WolfLogo";
-import TikTokIcon from "./icons/TikTokIcon";
-import WhatsAppIcon from "./icons/WhatsAppIcon";
-import { SOCIAL_LINKS, SOCIAL_COLORS, type SocialNetwork, openSocial } from "../config/social";
+
+import { SOCIAL_ICON_IMG, type SocialNetwork, openSocial } from "../config/social";
+
+export type PlayAnchor = "top" | "game";
 
 interface SidebarProps {
   view: ViewType;
@@ -17,15 +17,16 @@ interface SidebarProps {
   username: string;
   onOpenGameFolder: () => void;
   collapsed: boolean;
+  playAnchor: PlayAnchor;
+  onPlayNav: (anchor: PlayAnchor) => void;
 }
 
-const navItems: Array<{ id: ViewType; label: string; icon: typeof Home }> = [
-  { id: "play", label: "Inicio", icon: Home },
-  { id: "play", label: "Jugar", icon: Play },
+const navItems: Array<{ id: ViewType; label: string; icon: typeof Home; anchor?: PlayAnchor }> = [
+  { id: "play", label: "Inicio", icon: Home, anchor: "top" },
+  { id: "play", label: "Jugar", icon: Play, anchor: "game" },
   { id: "installations", label: "Instalaciones", icon: Package },
-  { id: "mods", label: "Mods", icon: Puzzle },
-  { id: "resources", label: "Recursos", icon: Folder },
-  { id: "shaders", label: "Shaders", icon: Sun },
+  { id: "mods", label: "Recursos", icon: Folder },
+  { id: "skins", label: "Skins", icon: Palette },
   { id: "account", label: "Perfil", icon: UserCircle },
   { id: "settings", label: "Ajustes", icon: Settings },
 ];
@@ -33,29 +34,21 @@ const navItems: Array<{ id: ViewType; label: string; icon: typeof Home }> = [
 const socialNetworks: SocialNetwork[] = ["twitch", "youtube", "tiktok", "whatsapp"];
 
 const getSocialIcon = (network: SocialNetwork) => {
-  switch (network) {
-    case "twitch":
-      return (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" style={{ color: SOCIAL_COLORS.twitch }}>
-          <path d="M12.545,10.239v3.821h2.933c-0.259,1.254-1.002,2.497-2.306,2.497c-1.414,0-2.543-1.031-2.543-2.527v-3.622H8.19V9.03h2.117V6.494c0-2.076,1.119-3.457,3.137-3.457c0.907,0,1.624,0.114,1.857,0.166v2.023h-1.273c-1.005,0-1.187,0.476-1.187,1.178v1.548H12.545z M20.421,12.972c0,3.695-3.224,7.431-7.518,7.431c-4.025,0-7.366-3.516-7.426-7.299h0.061c0.018-1.517,0.62-2.775,1.745-3.671c-0.045-0.049-0.068-0.111-0.068-0.174c0-0.054,0.014-0.101,0.052-0.142c0.635-0.647,1.486-1.09,2.464-1.09c1.993,0,3.582,1.574,3.582,3.739c0,2.184-1.508,3.82-3.477,3.946c-0.207,0.015-0.405,0.031-0.609,0.031c-0.32,0-0.619-0.034-0.91-0.077c0.298,1.024,1.079,1.919,2.145,1.919c2.756,0,4.608-2.577,4.608-6.169C22.801,15.214,21.23,12.972,19.127,12.972H20.421z M19.076,1.176h2.859v2.859h-2.859V1.176z M1.176,19.076h2.859v2.859H1.176V19.076z M19.076,19.076h2.859v2.859h-2.859V19.076z M1.176,1.176h2.859v2.859H1.176V1.176z" />
-        </svg>
-      );
-    case "youtube":
-      return (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" style={{ color: SOCIAL_COLORS.youtube }}>
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-        </svg>
-      );
-    case "tiktok":
-      return <TikTokIcon size={20} />;
-    case "whatsapp":
-      return <WhatsAppIcon size={20} />;
-    default:
-      return null;
+  const img = SOCIAL_ICON_IMG[network];
+  if (img) {
+    return <img src={img} alt={network} className="w-5 h-5 rounded-full object-cover" />;
   }
+  if (network === "youtube") {
+    return (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" style={{ color: "#FF0000" }}>
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+      </svg>
+    );
+  }
+  return null;
 };
 
-export default function Sidebar({ view, onChange, username, onOpenGameFolder, collapsed }: SidebarProps) {
+export default function Sidebar({ view, onChange, username, onOpenGameFolder, collapsed, playAnchor, onPlayNav }: SidebarProps) {
   const initial = (username || "J").charAt(0).toUpperCase();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -83,7 +76,7 @@ export default function Sidebar({ view, onChange, username, onOpenGameFolder, co
       {/* Logo Section */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <WolfLogo size={32} glow />
+          <img src="/wolf-logo.png" alt="RagsMC" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
           {!collapsed && (
             <>
               <span className="text-xl font-bold text-white tracking-tight">RagsMC</span>
@@ -108,11 +101,19 @@ export default function Sidebar({ view, onChange, username, onOpenGameFolder, co
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto" aria-label="Navegación principal">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = view === item.id;
+          const active = item.anchor ? (view === "play" && playAnchor === item.anchor) : view === item.id;
+          const handleClick = () => {
+            if (item.anchor) {
+              onChange("play");
+              onPlayNav(item.anchor);
+            } else {
+              onChange(item.id);
+            }
+          };
           return (
             <button
-              key={item.id}
-              onClick={() => onChange(item.id)}
+              key={`${item.id}-${item.label}`}
+              onClick={handleClick}
               className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-[#00ff88] text-black font-semibold"
@@ -138,8 +139,7 @@ export default function Sidebar({ view, onChange, username, onOpenGameFolder, co
             <button
               key={network}
               onClick={() => openSocial(network).catch(() => {})}
-              className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
-              style={{ color: SOCIAL_COLORS[network] }}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
               title={network}
             >
               {getSocialIcon(network)}

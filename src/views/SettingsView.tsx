@@ -2,15 +2,20 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Cpu, Disc, Globe, Monitor, Coffee, RefreshCw, FolderOpen, CheckCircle2, AlertTriangle, Search, Download, ArrowDownToLine } from "lucide-react";
 import type { UpdateInfo } from "../types";
+import MemoryPicker from "../components/MemoryPicker";
+import RuntimeManager from "../components/RuntimeManager";
 
 export interface LauncherSettings {
   javaPath: string;
+  javaRuntimeKind: string;
+  javaArch: string;
   memory: number;
   width: number;
   height: number;
   fullscreen: boolean;
   discordRichPresence: boolean;
   dedicatedGpu: boolean;
+  forceCpu: boolean;
   dnsOverride: string;
 }
 
@@ -185,42 +190,19 @@ export default function SettingsView({ settings, onChange }: SettingsViewProps) 
                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-green-500/60"
               />
             </section>
+
+            <RuntimeManager
+              kind={settings.javaRuntimeKind || "auto"}
+              arch={settings.javaArch || "auto"}
+              onChange={onChange}
+            />
           </div>
         )}
 
         {tab === "memory" && (
           <section className="rounded-xl border border-white/10 bg-[#141414] p-5">
-            <h2 className="text-sm font-semibold text-zinc-200 mb-3">
-              Memoria: {(settings.memory / 1024).toFixed(1)} GB
-            </h2>
-            <input
-              type="range"
-              min={1024}
-              max={16384}
-              step={512}
-              value={settings.memory}
-              onChange={(e) => onChange({ memory: Number(e.target.value) })}
-              className="w-full"
-            />
-            <div className="flex justify-between text-[10px] text-zinc-600 mt-1">
-              <span>1 GB</span>
-              <span>16 GB</span>
-            </div>
-            <div className="mt-3 flex gap-2">
-              {[2048, 4096, 6144, 8192].map((mb) => (
-                <button
-                  key={mb}
-                  onClick={() => onChange({ memory: mb })}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    settings.memory === mb
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                      : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
-                  }`}
-                >
-                  {(mb / 1024).toFixed(0)} GB
-                </button>
-              ))}
-            </div>
+            <h2 className="text-sm font-semibold text-zinc-200 mb-3">Memoria global (por defecto)</h2>
+            <MemoryPicker valueMb={settings.memory} onChange={(memory) => onChange({ memory })} />
           </section>
         )}
 
@@ -303,16 +285,36 @@ export default function SettingsView({ settings, onChange }: SettingsViewProps) 
               <label className="flex items-center justify-between text-sm text-zinc-300 cursor-pointer">
                 <div className="flex items-center gap-2">
                   <Monitor className="w-4 h-4 text-zinc-500" />
-                  <span>Usar GPU Dedicada</span>
+                  <span>Forzar GPU dedicada</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.dedicatedGpu ?? false}
-                  onChange={(e) => onChange({ dedicatedGpu: e.target.checked })}
+                  onChange={(e) => onChange({
+                    dedicatedGpu: e.target.checked,
+                    ...(e.target.checked ? { forceCpu: false } : {}),
+                  })}
                   className="w-4 h-4 accent-green-500"
                 />
               </label>
               <p className="text-[10px] text-zinc-600 -mt-1 ml-6">Fuerza el uso de la tarjeta grafica dedicada (si hay varias).</p>
+
+              <label className="flex items-center justify-between text-sm text-zinc-300 cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-zinc-500" />
+                  <span>Forzar CPU (Mesa por software)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.forceCpu ?? false}
+                  onChange={(e) => onChange({
+                    forceCpu: e.target.checked,
+                    ...(e.target.checked ? { dedicatedGpu: false } : {}),
+                  })}
+                  className="w-4 h-4 accent-green-500"
+                />
+              </label>
+              <p className="text-[10px] text-zinc-600 -mt-1 ml-6">Renderiza con el procesador usando Mesa llvmpipe. Requiere Mesa descargado (ver Java).</p>
 
               <div>
                 <label className="flex items-center gap-2 text-sm text-zinc-300 mb-1.5">

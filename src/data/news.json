@@ -1,5 +1,13 @@
 [
   {
+    "id": "7",
+    "title": "RagsMC Launcher v1.0.4",
+    "summary": "Nuevo modulo de Skins offline: visor 3D con animaciones, galeria, modelos Classic y Slim, y servidor local de skins. Seccion Recursos unificada (mods, shaders y texturas con verificacion real). Inicio y Jugar ahora navegan con scroll automatico. Paneles de noticias y mods destacados mas legibles con logos reales de Modrinth.",
+    "date": "2026-09-20",
+    "type": "update",
+    "icon": "update"
+  },
+  {
     "id": "0",
     "title": "RagsMC Launcher v1.0.3",
     "summary": "Auditoria completa de librerias nativas LWJGL. Corregido bug critico: las natives LWJGL ahora se extraen correctamente en TODAS las versiones de Minecraft (1.0 - 1.21+). Soporte para 4 eras de LWJGL: 2.9.x, 3.1.x, 3.2.x, 3.3.x.",
