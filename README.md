@@ -17,8 +17,9 @@ RagsMC Launcher busca ofrecer una forma sencilla, moderna y personalizable de ge
 
 ## 📸 Capturas
 
-![Uploading {05B7933F-DCB1-40F0-B8DD-AE23212E0ACE}.png…]()
+<img width="1920" height="1033" alt="Foto1" src="https://github.com/user-attachments/assets/215e195a-8e20-4065-a6ba-c484352b555e" />
 
+<img width="1920" height="1033" alt="Foto2" src="https://github.com/user-attachments/assets/1135be7c-2b6c-4411-83a8-75162547bd72" />
 
 ---
 
