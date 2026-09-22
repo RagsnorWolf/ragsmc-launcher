@@ -24,8 +24,16 @@ function loadCfKey(): string {
   }
 }
 
+const FILTER_LOADERS = ["fabric", "forge", "neoforge", "quilt"];
+const FILTER_VERSIONS = [
+  "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.19.2",
+  "1.18.2", "1.17.1", "1.16.5", "1.12.2", "1.8.9", "1.7.10",
+];
+
 export default function ModrinthSearch({ installationId, mcVersion, loader, onInstalled }: ModrinthSearchProps) {
   const [source, setSource] = useState<Source>("modrinth");
+  const [filterLoader, setFilterLoader] = useState(loader.toLowerCase());
+  const [filterVersion, setFilterVersion] = useState(mcVersion);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ModResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -49,15 +57,15 @@ export default function ModrinthSearch({ installationId, mcVersion, loader, onIn
         src === "modrinth"
           ? await invoke<ModResult[]>("search_mods", {
               query: q.trim(),
-              mcVersion,
-              loader: loader.toLowerCase(),
+              mcVersion: filterVersion,
+              loader: filterLoader,
               limit: PAGE_SIZE,
               offset,
             })
           : await invoke<ModResult[]>("search_curseforge_mods", {
               query: q.trim(),
-              mcVersion,
-              loader: loader.toLowerCase(),
+              mcVersion: filterVersion,
+              loader: filterLoader,
               apiKey: key.trim(),
               pageSize: PAGE_SIZE,
               index: offset,
@@ -83,14 +91,25 @@ export default function ModrinthSearch({ installationId, mcVersion, loader, onIn
     void doSearch(true, query, source, cfKey);
   };
 
-  // Al abrir o cambiar de fuente/versión: explorar catálogo (query vacía = todos)
+  // Al abrir o cambiar de fuente/filtros: explorar catálogo (query vacía = todos)
   useEffect(() => {
     setResults([]);
     setHasMore(false);
     setSearched(false);
     void doSearch(false, "", source, cfKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, mcVersion, loader, installationId]);
+  }, [source, filterLoader, filterVersion, installationId]);
+
+  const versionOptions = filterVersion && !FILTER_VERSIONS.includes(filterVersion)
+    ? [filterVersion, ...FILTER_VERSIONS]
+    : FILTER_VERSIONS;
+
+  // Si cambia la instalación, volver a sus filtros
+  useEffect(() => {
+    setFilterLoader(loader.toLowerCase());
+    setFilterVersion(mcVersion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [installationId]);
 
   const saveCfKey = () => {
     const key = cfKeyInput.trim();
@@ -190,6 +209,28 @@ export default function ModrinthSearch({ installationId, mcVersion, loader, onIn
       )}
 
       <div className="flex gap-2">
+        <select
+          value={filterLoader}
+          onChange={(e) => setFilterLoader(e.target.value)}
+          title="Cargador"
+          className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 h-10 text-xs outline-none focus:border-green-500/60 text-zinc-300"
+        >
+          <option value="">Todos los loaders</option>
+          {FILTER_LOADERS.map((l) => (
+            <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>
+          ))}
+        </select>
+        <select
+          value={filterVersion}
+          onChange={(e) => setFilterVersion(e.target.value)}
+          title="Versión de Minecraft"
+          className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 h-10 text-xs outline-none focus:border-green-500/60 text-zinc-300 max-w-[130px]"
+        >
+          <option value="">Todas</option>
+          {versionOptions.map((v) => (
+            <option key={v} value={v}>{v}</option>
+          ))}
+        </select>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
           <input
@@ -213,6 +254,10 @@ export default function ModrinthSearch({ installationId, mcVersion, loader, onIn
           {searching ? "Buscando..." : "Buscar"}
         </button>
       </div>
+
+      <p className="text-[11px] text-zinc-600">
+        Los filtros solo afectan la búsqueda. Al instalar se usa la versión ({mcVersion || "todas"}) y loader ({loader}) de tu instalación.
+      </p>
 
       {results.length > 0 && (
         <div className="space-y-2 max-h-96 overflow-y-auto">

@@ -62,5 +62,829 @@
     "date": "2026-09-12",
     "type": "feature",
     "icon": "feature"
+  },
+  {
+    "id": "mc-26-3",
+    "title": "Minecraft 26.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2026-09-15.",
+    "date": "2026-09-15",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-26-2",
+    "title": "Minecraft 26.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2026-06-16.",
+    "date": "2026-06-16",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-26-1-2",
+    "title": "Minecraft 26.1.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2026-04-09.",
+    "date": "2026-04-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-26-1-1",
+    "title": "Minecraft 26.1.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2026-04-01.",
+    "date": "2026-04-01",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-26-1",
+    "title": "Minecraft 26.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2026-03-24.",
+    "date": "2026-03-24",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-11",
+    "title": "Minecraft 1.21.11",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-12-09.",
+    "date": "2025-12-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-10",
+    "title": "Minecraft 1.21.10",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-10-07.",
+    "date": "2025-10-07",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-9",
+    "title": "Minecraft 1.21.9",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-09-30.",
+    "date": "2025-09-30",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-8",
+    "title": "Minecraft 1.21.8",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-07-17.",
+    "date": "2025-07-17",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-7",
+    "title": "Minecraft 1.21.7",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-06-30.",
+    "date": "2025-06-30",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-6",
+    "title": "Minecraft 1.21.6",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-06-17.",
+    "date": "2025-06-17",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-5",
+    "title": "Minecraft 1.21.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2025-03-25.",
+    "date": "2025-03-25",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-4",
+    "title": "Minecraft 1.21.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2024-12-03.",
+    "date": "2024-12-03",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-3",
+    "title": "Minecraft 1.21.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2024-10-23.",
+    "date": "2024-10-23",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-2",
+    "title": "Minecraft 1.21.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2024-10-22.",
+    "date": "2024-10-22",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21-1",
+    "title": "Minecraft 1.21.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2024-08-08.",
+    "date": "2024-08-08",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-21",
+    "title": "Minecraft 1.21",
+    "summary": "Tricky Trials: cámaras de prueba, maza y brisa. Publicada el 2024-06-13.",
+    "date": "2024-06-13",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-6",
+    "title": "Minecraft 1.20.6",
+    "summary": "Última de la serie 1.20 con forjas actualizadas. Publicada el 2024-04-29.",
+    "date": "2024-04-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-5",
+    "title": "Minecraft 1.20.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2024-04-23.",
+    "date": "2024-04-23",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-4",
+    "title": "Minecraft 1.20.4",
+    "summary": "Estable con mejoras de rendimiento y prueba de Realms. Publicada el 2023-12-07.",
+    "date": "2023-12-07",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-3",
+    "title": "Minecraft 1.20.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2023-12-04.",
+    "date": "2023-12-04",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-2",
+    "title": "Minecraft 1.20.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2023-09-20.",
+    "date": "2023-09-20",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20-1",
+    "title": "Minecraft 1.20.1",
+    "summary": "La versión más usada para mods modernos. Publicada el 2023-06-12.",
+    "date": "2023-06-12",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-20",
+    "title": "Minecraft 1.20",
+    "summary": "Trails & Tales: arqueología, camellos y cerezos. Publicada el 2023-06-02.",
+    "date": "2023-06-02",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-19-4",
+    "title": "Minecraft 1.19.4",
+    "summary": "Incluye el nuevo sistema de texturas y comandos. Publicada el 2023-03-14.",
+    "date": "2023-03-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-19-3",
+    "title": "Minecraft 1.19.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2022-12-07.",
+    "date": "2022-12-07",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-19-2",
+    "title": "Minecraft 1.19.2",
+    "summary": "Muy popular para modpacks con Forge y Fabric. Publicada el 2022-08-05.",
+    "date": "2022-08-05",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-19-1",
+    "title": "Minecraft 1.19.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2022-07-27.",
+    "date": "2022-07-27",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-19",
+    "title": "Minecraft 1.19",
+    "summary": "The Wild Update: manglares, warden y chat seguro. Publicada el 2022-06-07.",
+    "date": "2022-06-07",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-18-2",
+    "title": "Minecraft 1.18.2",
+    "summary": "Estable y muy usada en servidores con mods. Publicada el 2022-02-28.",
+    "date": "2022-02-28",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-18-1",
+    "title": "Minecraft 1.18.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2021-12-10.",
+    "date": "2021-12-10",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-18",
+    "title": "Minecraft 1.18",
+    "summary": "Caves & Cliffs Parte 2: cuevas y montañas gigantes. Publicada el 2021-11-30.",
+    "date": "2021-11-30",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-17-1",
+    "title": "Minecraft 1.17.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2021-07-06.",
+    "date": "2021-07-06",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-17",
+    "title": "Minecraft 1.17",
+    "summary": "Caves & Cliffs Parte 1: cobre, amatista y ajolotes. Publicada el 2021-06-08.",
+    "date": "2021-06-08",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16-5",
+    "title": "Minecraft 1.16.5",
+    "summary": "Versión estable ideal para mods y multijugador offline. Publicada el 2021-01-14.",
+    "date": "2021-01-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16-4",
+    "title": "Minecraft 1.16.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2020-10-29.",
+    "date": "2020-10-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16-3",
+    "title": "Minecraft 1.16.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2020-09-10.",
+    "date": "2020-09-10",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16-2",
+    "title": "Minecraft 1.16.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2020-08-11.",
+    "date": "2020-08-11",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16-1",
+    "title": "Minecraft 1.16.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2020-06-24.",
+    "date": "2020-06-24",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-16",
+    "title": "Minecraft 1.16",
+    "summary": "Nether Update: el Nether renovado por completo. Publicada el 2020-06-23.",
+    "date": "2020-06-23",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-15-2",
+    "title": "Minecraft 1.15.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2020-01-17.",
+    "date": "2020-01-17",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-15-1",
+    "title": "Minecraft 1.15.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2019-12-16.",
+    "date": "2019-12-16",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-15",
+    "title": "Minecraft 1.15",
+    "summary": "Buzzy Bees: abejas y colmenas. Publicada el 2019-12-09.",
+    "date": "2019-12-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-14-4",
+    "title": "Minecraft 1.14.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2019-07-19.",
+    "date": "2019-07-19",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-14-3",
+    "title": "Minecraft 1.14.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2019-06-24.",
+    "date": "2019-06-24",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-14-2",
+    "title": "Minecraft 1.14.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2019-05-27.",
+    "date": "2019-05-27",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-14-1",
+    "title": "Minecraft 1.14.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2019-05-13.",
+    "date": "2019-05-13",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-14",
+    "title": "Minecraft 1.14",
+    "summary": "Village & Pillage: saqueadores y aldeanos renovados. Publicada el 2019-04-23.",
+    "date": "2019-04-23",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-13-2",
+    "title": "Minecraft 1.13.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2018-10-22.",
+    "date": "2018-10-22",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-13-1",
+    "title": "Minecraft 1.13.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2018-08-22.",
+    "date": "2018-08-22",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-13",
+    "title": "Minecraft 1.13",
+    "summary": "Update Aquatic: océanos, tridentes y delfines. Publicada el 2018-07-18.",
+    "date": "2018-07-18",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-12-2",
+    "title": "Minecraft 1.12.2",
+    "summary": "La versión con más mods de la historia. Publicada el 2017-09-18.",
+    "date": "2017-09-18",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-12-1",
+    "title": "Minecraft 1.12.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2017-08-03.",
+    "date": "2017-08-03",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-12",
+    "title": "Minecraft 1.12",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2017-06-02.",
+    "date": "2017-06-02",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-11-2",
+    "title": "Minecraft 1.11.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-12-21.",
+    "date": "2016-12-21",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-11-1",
+    "title": "Minecraft 1.11.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-12-20.",
+    "date": "2016-12-20",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-11",
+    "title": "Minecraft 1.11",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-11-14.",
+    "date": "2016-11-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-10-2",
+    "title": "Minecraft 1.10.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-06-23.",
+    "date": "2016-06-23",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-10-1",
+    "title": "Minecraft 1.10.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-06-22.",
+    "date": "2016-06-22",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-10",
+    "title": "Minecraft 1.10",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-06-08.",
+    "date": "2016-06-08",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-9-3",
+    "title": "Minecraft 1.9.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-05-10.",
+    "date": "2016-05-10",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-9-4",
+    "title": "Minecraft 1.9.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-05-10.",
+    "date": "2016-05-10",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-9-1",
+    "title": "Minecraft 1.9.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-03-30.",
+    "date": "2016-03-30",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-9-2",
+    "title": "Minecraft 1.9.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-03-30.",
+    "date": "2016-03-30",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-9",
+    "title": "Minecraft 1.9",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2016-02-29.",
+    "date": "2016-02-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-9",
+    "title": "Minecraft 1.8.9",
+    "summary": "La favorita del PvP y servidores competitivos. Publicada el 2015-12-03.",
+    "date": "2015-12-03",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-8",
+    "title": "Minecraft 1.8.8",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-07-27.",
+    "date": "2015-07-27",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-7",
+    "title": "Minecraft 1.8.7",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-06-05.",
+    "date": "2015-06-05",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-6",
+    "title": "Minecraft 1.8.6",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-05-25.",
+    "date": "2015-05-25",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-5",
+    "title": "Minecraft 1.8.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-05-22.",
+    "date": "2015-05-22",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-4",
+    "title": "Minecraft 1.8.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-04-17.",
+    "date": "2015-04-17",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-3",
+    "title": "Minecraft 1.8.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-02-20.",
+    "date": "2015-02-20",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-2",
+    "title": "Minecraft 1.8.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2015-02-19.",
+    "date": "2015-02-19",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8-1",
+    "title": "Minecraft 1.8.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-11-24.",
+    "date": "2014-11-24",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-8",
+    "title": "Minecraft 1.8",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-09-02.",
+    "date": "2014-09-02",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-10",
+    "title": "Minecraft 1.7.10",
+    "summary": "Muy usada para mods clásicos con Forge. Publicada el 2014-05-14.",
+    "date": "2014-05-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-9",
+    "title": "Minecraft 1.7.9",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-04-14.",
+    "date": "2014-04-14",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-6",
+    "title": "Minecraft 1.7.6",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-04-09.",
+    "date": "2014-04-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-7",
+    "title": "Minecraft 1.7.7",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-04-09.",
+    "date": "2014-04-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-8",
+    "title": "Minecraft 1.7.8",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-04-09.",
+    "date": "2014-04-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-5",
+    "title": "Minecraft 1.7.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2014-02-26.",
+    "date": "2014-02-26",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-4",
+    "title": "Minecraft 1.7.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-12-09.",
+    "date": "2013-12-09",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-3",
+    "title": "Minecraft 1.7.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-12-06.",
+    "date": "2013-12-06",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-7-2",
+    "title": "Minecraft 1.7.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-10-25.",
+    "date": "2013-10-25",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-6-4",
+    "title": "Minecraft 1.6.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-09-19.",
+    "date": "2013-09-19",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-6-2",
+    "title": "Minecraft 1.6.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-07-05.",
+    "date": "2013-07-05",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-6-1",
+    "title": "Minecraft 1.6.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-06-28.",
+    "date": "2013-06-28",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-5-2",
+    "title": "Minecraft 1.5.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-04-25.",
+    "date": "2013-04-25",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-5-1",
+    "title": "Minecraft 1.5.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2013-03-20.",
+    "date": "2013-03-20",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-4-7",
+    "title": "Minecraft 1.4.7",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-12-27.",
+    "date": "2012-12-27",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-4-5",
+    "title": "Minecraft 1.4.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-12-19.",
+    "date": "2012-12-19",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-4-6",
+    "title": "Minecraft 1.4.6",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-12-19.",
+    "date": "2012-12-19",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-4-4",
+    "title": "Minecraft 1.4.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-12-13.",
+    "date": "2012-12-13",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-4-2",
+    "title": "Minecraft 1.4.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-11-24.",
+    "date": "2012-11-24",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-3-2",
+    "title": "Minecraft 1.3.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-08-15.",
+    "date": "2012-08-15",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-3-1",
+    "title": "Minecraft 1.3.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-07-31.",
+    "date": "2012-07-31",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-2-5",
+    "title": "Minecraft 1.2.5",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-03-29.",
+    "date": "2012-03-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-2-4",
+    "title": "Minecraft 1.2.4",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-03-21.",
+    "date": "2012-03-21",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-2-3",
+    "title": "Minecraft 1.2.3",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-03-01.",
+    "date": "2012-03-01",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-2-1",
+    "title": "Minecraft 1.2.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-02-29.",
+    "date": "2012-02-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-2-2",
+    "title": "Minecraft 1.2.2",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-02-29.",
+    "date": "2012-02-29",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-1",
+    "title": "Minecraft 1.1",
+    "summary": "Versión estable oficial de Minecraft, publicada el 2012-01-11.",
+    "date": "2012-01-11",
+    "type": "update",
+    "icon": "update"
+  },
+  {
+    "id": "mc-1-0",
+    "title": "Minecraft 1.0",
+    "summary": "Lanzamiento oficial de Minecraft (Adventure Update). Publicada el 2011-11-17.",
+    "date": "2011-11-17",
+    "type": "update",
+    "icon": "update"
   }
 ]

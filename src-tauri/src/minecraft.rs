@@ -3488,11 +3488,15 @@ pub fn search_mods(
     limit: Option<u32>,
     offset: Option<u32>,
 ) -> Result<Vec<ModResult>, String> {
-    let facets = format!(
-        "[[\"project_type:mod\"],[\"versions:{}\"],[\"categories:{}\"]]",
-        mc_version,
-        loader.to_lowercase()
-    );
+    // Facetas opcionales: "" o "all" = sin filtro (explorar todo)
+    let mut facet_groups: Vec<String> = vec!["[\"project_type:mod\"]".to_string()];
+    if !mc_version.trim().is_empty() && mc_version.trim().to_lowercase() != "all" {
+        facet_groups.push(format!("[\"versions:{}\"]", mc_version.trim()));
+    }
+    if !loader.trim().is_empty() && loader.trim().to_lowercase() != "all" {
+        facet_groups.push(format!("[\"categories:{}\"]", loader.trim().to_lowercase()));
+    }
+    let facets = format!("[{}]", facet_groups.join(","));
     let limit = limit.unwrap_or(20).clamp(1, 100).to_string();
     let offset = offset.unwrap_or(0).to_string();
     let client = http_client()?;
@@ -3646,19 +3650,28 @@ pub fn search_curseforge_mods(
     let client = cf_client(&api_key)?;
     let page_size = page_size.unwrap_or(20).clamp(1, 50).to_string();
     let index = index.unwrap_or(0).to_string();
+    // Filtros opcionales: "" o "all" = sin filtro
+    let mut params: Vec<(String, String)> = vec![
+        ("gameId".to_string(), CURSEFORGE_GAME_ID.to_string()),
+        ("searchFilter".to_string(), query.clone()),
+        ("sortField".to_string(), "2".to_string()),
+        ("sortOrder".to_string(), "desc".to_string()),
+        ("pageSize".to_string(), page_size),
+        ("index".to_string(), index),
+    ];
+    if !mc_version.trim().is_empty() && mc_version.trim().to_lowercase() != "all" {
+        params.push(("gameVersion".to_string(), mc_version.trim().to_string()));
+    }
+    if !loader.trim().is_empty() && loader.trim().to_lowercase() != "all" {
+        params.push((
+            "modLoaderType".to_string(),
+            curseforge_loader_type(&loader).to_string(),
+        ));
+    }
     let resp = client
         .get(format!("{}/v1/mods/search", CURSEFORGE_API))
         .header("x-api-key", api_key.trim())
-        .query(&[
-            ("gameId", CURSEFORGE_GAME_ID.to_string()),
-            ("searchFilter", query.clone()),
-            ("gameVersion", mc_version.clone()),
-            ("modLoaderType", curseforge_loader_type(&loader).to_string()),
-            ("sortField", "2".to_string()),
-            ("sortOrder", "desc".to_string()),
-            ("pageSize", page_size),
-            ("index", index),
-        ])
+        .query(&params)
         .send()
         .map_err(|e| format!("Error buscando en CurseForge: {}", e))?;
     if resp.status().as_u16() == 403 {
